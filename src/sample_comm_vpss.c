@@ -105,33 +105,6 @@ HI_S32 SAMPLE_COMM_VPSS_StartGroup(VPSS_GRP VpssGrp, VPSS_GRP_ATTR_S *pstVpssGrp
         return HI_FAILURE;
     }
 
-#if 0
-	//设置裁剪属性
-	VPSS_CROP_INFO_S stCropInfo;
-	
-	s32Ret = HI_MPI_VPSS_GetGrpCrop(VpssGrp, &stCropInfo);
-	if(s32Ret != HI_SUCCESS)
-	{
-		SAMPLE_PRT("HI_MPI_VPSS_GetChnCrop failed with %#x!\n", s32Ret);
-		return s32Ret;
-	}
-
-	stCropInfo.bEnable = 1;
-	stCropInfo.enCropCoordinate = VPSS_CROP_ABS_COOR;
-	stCropInfo.stCropRect.s32X = 320;
-	stCropInfo.stCropRect.s32Y = 120;
-	stCropInfo.stCropRect.u32Width = 640;
-	stCropInfo.stCropRect.u32Height = 480;
-	s32Ret = HI_MPI_VPSS_SetGrpCrop(VpssGrp, &stCropInfo);
-	if(s32Ret != HI_SUCCESS)
-	{
-		SAMPLE_PRT("HI_MPI_VPSS_SetGrpCrop failed with %#x!\n", s32Ret);
-		return s32Ret;
-	}	
-#endif	
-
-
-	
     s32Ret = HI_MPI_VPSS_StartGrp(VpssGrp);
     if (s32Ret != HI_SUCCESS)
     {

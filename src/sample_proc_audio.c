@@ -24,7 +24,6 @@
 #include "config_site.h"
 
 
-#define USE_SIMPLE_THREAD
 #ifdef USE_SIMPLE_THREAD
 	#include "uthread.h"
 #endif

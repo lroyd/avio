@@ -23,7 +23,7 @@
 #include "config_site.h"
 
 
-//#define USE_SIMPLE_THREAD
+
 #ifdef USE_SIMPLE_THREAD
 	#include "uthread.h"
 	#include "uepoll.h"
@@ -70,7 +70,7 @@ static void *videoInputProcess(void *_pArg)
 	s32Ret = HI_MPI_VENC_GetChnAttr(s32Chnnl, &stVencChnAttr);
 	if(s32Ret != HI_SUCCESS)
 	{
-		printf("HI_MPI_VENC_GetChnAttr chn[%d] failed with %#x!\n", s32Chnnl, s32Ret);
+		printf("HI_MPI_VENC_GetChnAttr chn[%d] failed with %#x!\n", s32Chnnl + 1, s32Ret);
 		return NULL;
 	}
 	enPayLoadType = stVencChnAttr.stVeAttr.enType;
@@ -81,14 +81,14 @@ static void *videoInputProcess(void *_pArg)
 		printf("SAMPLE_COMM_VENC_GetFilePostfix [%d] failed with %#x!\n", stVencChnAttr.stVeAttr.enType, s32Ret);
 		return NULL;
 	}
-	sprintf(aszFileName, "stream_chn%d%s", s32Chnnl, szFilePostfix);
+	sprintf(aszFileName, "stream_chn%d%s", s32Chnnl + 1, szFilePostfix);
 	pFile = fopen(aszFileName, "wb");
 	if (!pFile)
 	{
 		printf("open file[%s] failed!\n", aszFileName);
 		return NULL;
 	}
-	printf("[%d] save file %s\n", s32Chnnl, aszFileName);
+	printf("[%d] save file %s\n", s32Chnnl + 1, aszFileName);
 #endif
 
 	s32Fd = HI_MPI_VENC_GetFd(s32Chnnl);
@@ -113,7 +113,7 @@ static void *videoInputProcess(void *_pArg)
         }
         else if (s32Ret == 0)
         {
-            printf("channel [%d] get venc stream time out, exit thread\n", s32Chnnl);
+            printf("channel [%d] get venc stream time out, exit thread\n", s32Chnnl + 1);
             continue;
         }
         else
@@ -124,7 +124,7 @@ static void *videoInputProcess(void *_pArg)
 				
 				if (HI_MPI_VENC_Query(s32Chnnl, &stStat))
 				{
-					printf("HI_MPI_VENC_Query chn[%d] failed with %#x!\n", s32Chnnl, s32Ret);
+					printf("HI_MPI_VENC_Query chn[%d] failed with %#x!\n", s32Chnnl + 1, s32Ret);
 					break;
 				}
 				
@@ -217,7 +217,7 @@ static int videoInputProcess(void *_pArg)
 	s32Ret = HI_MPI_VENC_GetChnAttr(s32Chnnl, &stVencChnAttr);
 	if(s32Ret != HI_SUCCESS)
 	{
-		printf("HI_MPI_VENC_GetChnAttr chn[%d] failed with %#x!\n", s32Chnnl, s32Ret);
+		printf("HI_MPI_VENC_GetChnAttr chn[%d] failed with %#x!\n", s32Chnnl+ 1, s32Ret);
 		return 0;
 	}
 	enPayLoadType = stVencChnAttr.stVeAttr.enType;
@@ -228,14 +228,14 @@ static int videoInputProcess(void *_pArg)
 		printf("SAMPLE_COMM_VENC_GetFilePostfix [%d] failed with %#x!\n", stVencChnAttr.stVeAttr.enType, s32Ret);
 		return 0;
 	}
-	sprintf(aszFileName, "stream_chn%d%s", s32Chnnl, szFilePostfix);
+	sprintf(aszFileName, "stream_chn%d%s", s32Chnnl+ 1, szFilePostfix);
 	pFile = fopen(aszFileName, "wb");
 	if (!pFile)
 	{
 		printf("open file[%s] failed!\n", aszFileName);
 		return 0;
 	}
-	printf("[%d] save file %s\n", s32Chnnl, aszFileName);
+	printf("[%d] save file %s\n", s32Chnnl+ 1, aszFileName);
 #endif
 
 	UEPOLL_Create(&s32Epfd);
@@ -254,7 +254,7 @@ static int videoInputProcess(void *_pArg)
 		nfd = epoll_wait(s32Epfd, events, 8, 2000);  //2s
 		if (nfd <= 0)  
 		{
-			printf("channel [%d] get venc stream time out, exit thread\n", s32Chnnl);
+			printf("channel [%d] get venc stream time out, exit thread\n", s32Chnnl+ 1);
 			continue;
 		}
         else
@@ -262,7 +262,7 @@ static int videoInputProcess(void *_pArg)
 			memset(&stStream, 0, sizeof(stStream));
 			if (HI_MPI_VENC_Query(s32Chnnl, &stStat))
 			{
-				printf("HI_MPI_VENC_Query chn[%d] failed with %#x!\n", s32Chnnl, s32Ret);
+				printf("HI_MPI_VENC_Query chn[%d] failed with %#x!\n", s32Chnnl+ 1, s32Ret);
 				break;
 			}
 			
@@ -337,6 +337,80 @@ static void videoInputCleanup(void *_pArg, int _s32Code)
 #endif
 
 
+
+
+
+
+HI_S32 SAMPLE_PROC_VPSS_StartGroup(VPSS_GRP VpssGrp, VPSS_GRP_ATTR_S *pstVpssGrpAttr)
+{
+    HI_S32 s32Ret;
+    VPSS_NR_PARAM_U unNrParam = {{0}};
+    
+    if (VpssGrp < 0 || VpssGrp > VPSS_MAX_GRP_NUM)
+    {
+        printf("VpssGrp%d is out of rang. \n", VpssGrp);
+        return HI_FAILURE;
+    }
+
+    if (HI_NULL == pstVpssGrpAttr)
+    {
+        printf("null ptr,line%d. \n", __LINE__);
+        return HI_FAILURE;
+    }
+
+    s32Ret = HI_MPI_VPSS_CreateGrp(VpssGrp, pstVpssGrpAttr);
+    if (s32Ret != HI_SUCCESS)
+    {
+        SAMPLE_PRT("HI_MPI_VPSS_CreateGrp failed with %#x!\n", s32Ret);
+        return HI_FAILURE;
+    }
+
+    s32Ret = HI_MPI_VPSS_GetNRParam(VpssGrp, &unNrParam);
+    if (s32Ret != HI_SUCCESS)
+    {
+        SAMPLE_PRT("failed with %#x!\n", s32Ret);
+        return HI_FAILURE;
+    }
+    
+    s32Ret = HI_MPI_VPSS_SetNRParam(VpssGrp, &unNrParam);
+    if (s32Ret != HI_SUCCESS)
+    {
+        SAMPLE_PRT("failed with %#x!\n", s32Ret);
+        return HI_FAILURE;
+    }
+
+	VPSS_CROP_INFO_S stCropInfo;
+	
+	s32Ret = HI_MPI_VPSS_GetGrpCrop(VpssGrp, &stCropInfo);
+	if(s32Ret != HI_SUCCESS)
+	{
+		SAMPLE_PRT("HI_MPI_VPSS_GetChnCrop failed with %#x!\n", s32Ret);
+		return s32Ret;
+	}
+	
+#ifdef HI_VIDEO_GROUP_CROP
+	stCropInfo.bEnable = 1;
+	stCropInfo.enCropCoordinate = VPSS_CROP_ABS_COOR;
+	stCropInfo.stCropRect.s32X = HI_VIDEO_CROP_RECT_X;
+	stCropInfo.stCropRect.s32Y = HI_VIDEO_CROP_RECT_Y;
+	stCropInfo.stCropRect.u32Width = HI_VIDEO_CROP_RECT_W;
+	stCropInfo.stCropRect.u32Height = HI_VIDEO_CROP_RECT_H;
+	s32Ret = HI_MPI_VPSS_SetGrpCrop(VpssGrp, &stCropInfo);
+	if(s32Ret != HI_SUCCESS)
+	{
+		SAMPLE_PRT("HI_MPI_VPSS_SetGrpCrop failed with %#x!\n", s32Ret);
+		return s32Ret;
+	}	
+#endif	
+    s32Ret = HI_MPI_VPSS_StartGrp(VpssGrp);
+    if (s32Ret != HI_SUCCESS)
+    {
+        SAMPLE_PRT("HI_MPI_VPSS_StartGrp failed with %#x\n", s32Ret);
+        return HI_FAILURE;
+    }
+
+    return HI_SUCCESS;
+}
 
 int SAMPLE_PROC_VIDEO_CreatTrdAi(int _s32Chnnl, HI_VIDEO_CBK _pVideoCbk)
 {
