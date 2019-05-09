@@ -163,7 +163,8 @@ int video_data2(int type, char *p_data, int len, unsigned long long pts)
 		sleep(1);
 		//printf("cancel %d, addr %x\n", cancel, &cancel);
 	}
-#endif	
+	
+#else
 
 	while(video_smm->written == 1)
 	{
@@ -203,7 +204,7 @@ int video_data2(int type, char *p_data, int len, unsigned long long pts)
 	video_smm->packet_len = len;
 	
 	video_smm->written = 1;
-
+#endif
 	return 0;
 }
 

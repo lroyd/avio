@@ -28,21 +28,18 @@
 
 ////////////////////////////////////////////////////
 //只有一路音频
-int s32AiChnCnt = 1;
-int s32AoChnCnt = 1;
-AUDIO_DEV   AiDev = 0;
-AI_CHN      AiChn = 0;
-AUDIO_DEV   AoDev = 0;
-AO_CHN      AoChn = 0;
+static int s32AiChnCnt = 1;
+static int s32AoChnCnt = 1;
+static int	AiDev = 0;
+static int	AiChn = 0;
+static int	AoDev = 0;
+static int	AoChn = 0;
 ////////////////////////////////////////////////////
 const T_VideoChnnlInfo *g_tVideoChnnlTable[HI_VIDEO_CHNNL_NUM] = {NULL};
 
 
 VIDEO_NORM_E gs_enNorm = VIDEO_ENCODING_MODE_NTSC;
 SAMPLE_RC_E enRcMode= SAMPLE_RC_VBR;
-
-
-PIC_SIZE_E enSize[3] = {PIC_HD720, PIC_VGA, PIC_QVGA}; //PIC_HD720
 
 
 
