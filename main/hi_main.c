@@ -228,15 +228,13 @@ int main()
 {
 	int ret = -1;
 	
-	//g_rtsplive = create_rtsp_demo(554);
-	//session= create_rtsp_session(g_rtsplive, "/live.sdp");	
-	
+	g_rtsplive = create_rtsp_demo(554);
+	session= create_rtsp_session(g_rtsplive, "/live.sdp");	
 	
 	//IPC_ShareMemory(NULL, 12345, sizeof(shared_use_st), &cap);	
 	//IPC_ShareMemory(NULL, 12345, sizeof(shared_use_st), &play);	
 	
-	IPC_ShareMemory(NULL, 88888, sizeof(shared_use_st), &video_smm);	
-	
+	//IPC_ShareMemory(NULL, 88888, sizeof(shared_use_st), &video_smm);	
 
 	signal(SIGINT, HI_AVIO_SignalHandle);
 	signal(SIGTERM, HI_AVIO_SignalHandle);	
@@ -252,13 +250,13 @@ int main()
 	HI_AVIO_VideoSStartChannel(3, NULL);
 #endif	
 
-	//HI_AVIO_VideoSStartChannel(1, video_data2);
-	HI_AVIO_VideoSStartChannel(3, video_data2);
-	HI_AVIO_VideoSetTestCancel(3, user_cancel, (void *)&cancel);
+	HI_AVIO_VideoSStartChannel(1, video_data3);
+	//HI_AVIO_VideoSStartChannel(3, video_data2);
+	//HI_AVIO_VideoSetTestCancel(3, user_cancel, (void *)&cancel);
 	//ret = HI_AVIO_VideoSStartChannel(3, video_data3);
 	//ret = HI_AVIO_VideoSStartChannel(1, video_data2);
 	//printf("audio start %d\n", ret);
-	
+
 	while(1)
 	{
 		sleep(1);

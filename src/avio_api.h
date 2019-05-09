@@ -7,6 +7,30 @@
 #ifndef __AVIO_API_H__
 #define __AVIO_API_H__
 
+#define	HI_AUDIO_SAMPLE_RATE		(8000)	//采样率
+#define	HI_AUDIO_BIT_WIDTH			(1)		//8:0 16:1
+#define HI_AUDIO_PTNUMPERFRM		(160)
+
+typedef struct _tagAudioParamInfo
+{
+    int				m_u32Sample;
+	int				m_u32PtNumPerfrm;
+    unsigned char	m_u32BitWidth;
+}T_AudioParamInfo;
+
+
+
+#define	HI_VIDEO_CHNNL_NUM			(3)	//视频通道路数 1/2/3(固定不可修改)
+
+typedef struct _tagVpssCrop
+{
+	unsigned char   m_bEnable;
+    int				m_u32X;
+	int				m_u32Y;
+    int				m_u32W;
+	int				m_u32H;	
+}T_VpssCropInfo;
+
 
 
 typedef int (*HI_AUDIO_CBK)(char *, int);

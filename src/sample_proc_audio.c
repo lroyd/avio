@@ -28,11 +28,13 @@
 	#include "uthread.h"
 #endif
 
-
+#define AUDIO_IN_SAVE_FILE_NAME		("audio_in.pcm")
+#define AUDIO_OUT_SAVE_FILE_NAME	("audio_out.pcm")
 
 typedef struct _tagSampleAi
 {
     HI_BOOL			bStart;
+	HI_BOOL			bSaveFile;			//是否存成文件
     AUDIO_DEV		AiDev;
     int				AiChn;
 	int				s32QuitState;		//记录退出状态
@@ -43,6 +45,7 @@ typedef struct _tagSampleAi
 typedef struct _tagSampleAo
 {
 	HI_BOOL			bStart;
+	HI_BOOL			bSaveFile;			//是否存成文件
 	AUDIO_DEV		AoDev;
 	int				AoChn;
 	pthread_t		stAoPid;
@@ -88,10 +91,13 @@ static void *audioCapture(void *_pArg)
 	
 	TimeoutVal.tv_sec = 1;
 	TimeoutVal.tv_usec = 0;
-#ifdef HI_AUDIO_CAP_SAVE_FILE_NAME			
-    FILE    *pFile;
-	pFile = fopen(HI_AUDIO_CAP_SAVE_FILE_NAME, "w+");
-#endif	
+	
+	if (pstAiCtl->bSaveFile)
+	{
+		FILE    *pFile;
+		pFile = fopen(AUDIO_IN_SAVE_FILE_NAME, "w+");		
+	}
+	
 	printf("audioCapture start\n");
     while (pstAiCtl->bStart)
     {     
@@ -118,10 +124,12 @@ static void *audioCapture(void *_pArg)
 				continue;
             }
 			
-#ifdef HI_AUDIO_CAP_SAVE_FILE_NAME			
-			fwrite(stFrame.pVirAddr[0],  1 ,stFrame.u32Len , pFile);
-            fflush(pFile);
-#endif			
+			if (pstAiCtl->bSaveFile)
+			{
+				fwrite(stFrame.pVirAddr[0],  1 ,stFrame.u32Len , pFile);
+				fflush(pFile);				
+			}
+			
 			//回调用户
 			//if (pstAiCtl->pAiHandle)
 			{
@@ -140,9 +148,8 @@ static void *audioCapture(void *_pArg)
             
         }
     }
-#ifdef HI_AUDIO_CAP_SAVE_FILE_NAME			
-	fclose(pFile);
-#endif	
+	
+	if (pstAiCtl->bSaveFile) fclose(pFile);
 
     return NULL;
 }
@@ -156,11 +163,13 @@ static void *audioPlay(void *_pArg)
     AUDIO_FRAME_S stFrame; 
 	char play_buf[HI_AUDIO_PTNUMPERFRM * (HI_AUDIO_BIT_WIDTH + 1)] = {0};
 	stFrame.pVirAddr[0] = play_buf;
-
-#ifdef HI_AUDIO_PLAY_SAVE_FILE_NAME			
-    FILE    *pFile;
-	pFile = fopen(HI_AUDIO_PLAY_SAVE_FILE_NAME, "w+");
-#endif		
+	
+	FILE    *pFile;
+	if (pstAoCtl->bSaveFile)
+	{
+		pFile = fopen(AUDIO_OUT_SAVE_FILE_NAME, "w+");		
+	}
+	
 	printf("audioPlay start\n");
     while (pstAoCtl->bStart)
     {
@@ -172,11 +181,12 @@ static void *audioPlay(void *_pArg)
 		stFrame.u32Len = HI_AUDIO_PTNUMPERFRM * (HI_AUDIO_BIT_WIDTH + 1);
 		stFrame.enBitwidth	= HI_AUDIO_BIT_WIDTH;
 		stFrame.enSoundmode	= 0;
-
-#ifdef HI_AUDIO_PLAY_SAVE_FILE_NAME			
+		
+		if (pstAoCtl->bSaveFile)
+		{
 			fwrite(stFrame.pVirAddr[0],  1 ,stFrame.u32Len , pFile);
-            fflush(pFile);
-#endif	
+            fflush(pFile);			
+		}
 		
 		if (HI_MPI_AO_SendFrame(pstAoCtl->AoDev, pstAoCtl->AoChn, &stFrame, 1000))
 		{
@@ -188,10 +198,8 @@ static void *audioPlay(void *_pArg)
 		}    
 
     }
-#ifdef HI_AUDIO_PLAY_SAVE_FILE_NAME
-	fclose(pFile);
-#endif
-
+	
+	if (pstAoCtl->bSaveFile) fclose(pFile);
 
     return NULL;
 }
@@ -230,10 +238,13 @@ static int audioCapture2(void *_pArg)
 	
 	TimeoutVal.tv_sec = 1;
 	TimeoutVal.tv_usec = 0;
-#ifdef HI_AUDIO_CAP_SAVE_FILE_NAME			
-    FILE    *pFile;
-	pFile = fopen(HI_AUDIO_CAP_SAVE_FILE_NAME, "w+");
-#endif	
+	
+	FILE    *pFile;
+	if (pstAiCtl->bSaveFile)
+	{
+		pFile = fopen(AUDIO_IN_SAVE_FILE_NAME, "w+");		
+	}
+	
 	printf("audioCapture start\n");
     while (pstAiCtl->bStart)
     {     
@@ -260,10 +271,12 @@ static int audioCapture2(void *_pArg)
 				continue;
             }
 			
-#ifdef HI_AUDIO_CAP_SAVE_FILE_NAME			
-			fwrite(stFrame.pVirAddr[0],  1 ,stFrame.u32Len , pFile);
-            fflush(pFile);
-#endif			
+			if (pstAiCtl->bSaveFile)
+			{
+				fwrite(stFrame.pVirAddr[0],  1 ,stFrame.u32Len , pFile);
+				fflush(pFile);				
+			}
+		
 			//回调用户
 			//if (pstAiCtl->pAiHandle)
 			{
@@ -282,9 +295,8 @@ static int audioCapture2(void *_pArg)
             
         }
     }
-#ifdef HI_AUDIO_CAP_SAVE_FILE_NAME			
-	fclose(pFile);
-#endif	
+	
+	if (pstAiCtl->bSaveFile) fclose(pFile);
 
     return 0;
 }
@@ -303,10 +315,12 @@ static int audioPlay2(void *_pArg)
 	char play_buf[HI_AUDIO_PTNUMPERFRM * (HI_AUDIO_BIT_WIDTH + 1)] = {0};
 	stFrame.pVirAddr[0] = play_buf;
 
-#ifdef HI_AUDIO_PLAY_SAVE_FILE_NAME			
-    FILE    *pFile;
-	pFile = fopen(HI_AUDIO_PLAY_SAVE_FILE_NAME, "w+");
-#endif		
+	FILE    *pFile;
+	if (pstAoCtl->bSaveFile)
+	{
+		pFile = fopen(AUDIO_OUT_SAVE_FILE_NAME, "w+");
+	}
+		
 	printf("audioPlay start\n");
     while (pstAoCtl->bStart)
     {
@@ -318,11 +332,12 @@ static int audioPlay2(void *_pArg)
 		stFrame.u32Len = HI_AUDIO_PTNUMPERFRM * (HI_AUDIO_BIT_WIDTH + 1);
 		stFrame.enBitwidth	= HI_AUDIO_BIT_WIDTH;
 		stFrame.enSoundmode	= 0;
-
-#ifdef HI_AUDIO_PLAY_SAVE_FILE_NAME			
+		
+		if (pstAoCtl->bSaveFile)
+		{
 			fwrite(stFrame.pVirAddr[0],  1 ,stFrame.u32Len , pFile);
-            fflush(pFile);
-#endif	
+            fflush(pFile);			
+		}
 		
 		if (HI_MPI_AO_SendFrame(pstAoCtl->AoDev, pstAoCtl->AoChn, &stFrame, 1000))
 		{
@@ -334,10 +349,8 @@ static int audioPlay2(void *_pArg)
 		}    
 
     }
-#ifdef HI_AUDIO_PLAY_SAVE_FILE_NAME
-	fclose(pFile);
-#endif
 
+	if (pstAoCtl->bSaveFile) fclose(pFile);
 
     return 0;
 }
@@ -349,11 +362,94 @@ void audioPlayCleanup2(void *_pArg, int _s32Code)
 #endif
 
 
-int SAMPLE_PROC_AUDIO_CreatTrdAi(AUDIO_DEV AiDev, AI_CHN AiChn, HI_AUDIO_CBK _pAudioCap)
+
+HI_S32 SAMPLE_PROC_AUDIO_StartAi(AUDIO_DEV AiDevId, HI_S32 s32AiChnCnt,
+                                 AIO_ATTR_S* pstAioAttr, AUDIO_SAMPLE_RATE_E enOutSampleRate, HI_BOOL bResampleEn, HI_VOID* pstAiVqeAttr, HI_U32 u32AiVqeType,
+								 HI_S32 _s32Volume)
+{
+    HI_S32 i;
+    HI_S32 s32Ret;
+	
+    s32Ret = HI_MPI_AI_SetPubAttr(AiDevId, pstAioAttr);
+    if (s32Ret)
+    {
+        printf("%s: HI_MPI_AI_SetPubAttr(%d) failed with %#x\n", __FUNCTION__, AiDevId, s32Ret);
+        return s32Ret;
+    }
+	
+    s32Ret = HI_MPI_AI_Enable(AiDevId);
+	if (s32Ret)
+    {
+        printf("%s: HI_MPI_AI_Enable(%d) failed with %#x\n", __FUNCTION__, AiDevId, s32Ret);
+        return s32Ret;
+    }   
+	
+    for (i=0; i<s32AiChnCnt; i++)
+    {
+        s32Ret = HI_MPI_AI_EnableChn(AiDevId, i/(pstAioAttr->enSoundmode + 1));
+        if (s32Ret)
+        {
+            printf("%s: HI_MPI_AI_EnableChn(%d,%d) failed with %#x\n", __FUNCTION__, AiDevId, i, s32Ret);
+            return s32Ret;
+        }        
+
+        if (HI_TRUE == bResampleEn)
+        {
+            s32Ret = HI_MPI_AI_EnableReSmp(AiDevId, i, enOutSampleRate);
+			if (s32Ret)
+            {
+                printf("%s: HI_MPI_AI_EnableReSmp(%d,%d) failed with %#x\n", __FUNCTION__, AiDevId, i, s32Ret);
+                return s32Ret;
+            }
+        }
+
+		if (NULL != pstAiVqeAttr)
+        {
+			HI_BOOL bAiVqe = HI_TRUE;
+			switch (u32AiVqeType)
+            {
+				case 0:
+                    s32Ret = HI_SUCCESS;
+					bAiVqe = HI_FALSE;
+                    break;
+                case 1:
+                    s32Ret = HI_MPI_AI_SetVqeAttr(AiDevId, i, SAMPLE_AUDIO_AO_DEV, i, (AI_VQE_CONFIG_S *)pstAiVqeAttr);
+                    break;
+                default:
+                    s32Ret = HI_FAILURE;
+                    break;
+            }
+			if (s32Ret)
+		    {
+                printf("%s: SetAiVqe%d(%d,%d) failed with %#x\n", __FUNCTION__, u32AiVqeType, AiDevId, i, s32Ret);
+		        return s32Ret;
+		    }
+			
+		    if (bAiVqe)
+            {
+				s32Ret = HI_MPI_AI_EnableVqe(AiDevId, i);
+				if (s32Ret)
+				{
+					printf("%s: HI_MPI_AI_EnableVqe(%d,%d) failed with %#x\n", __FUNCTION__, AiDevId, i, s32Ret);
+					return s32Ret;
+				}
+			}
+			
+			HI_MPI_AI_SetVqeVolume(AiDevId, i, _s32Volume);
+			printf("set ai volume = %d\n", _s32Volume);
+		}
+    }
+    
+    return HI_SUCCESS;
+}
+
+
+int SAMPLE_PROC_AUDIO_CreatTrdAi(AUDIO_DEV AiDev, AI_CHN AiChn, HI_AUDIO_CBK _pAudioCap, HI_BOOL _bSaveFile)
 {
 	T_SampleAiInfo *pstAi = NULL;
 	pstAi = &g_tSampleAi[0];
     pstAi->bStart= HI_TRUE;
+	pstAi->bSaveFile = _bSaveFile;
     pstAi->AiDev = AiDev;
     pstAi->AiChn = AiChn;
 	pstAi->pAiHandle = _pAudioCap;
@@ -366,11 +462,12 @@ int SAMPLE_PROC_AUDIO_CreatTrdAi(AUDIO_DEV AiDev, AI_CHN AiChn, HI_AUDIO_CBK _pA
     return 0;
 }
 
-int SAMPLE_PROC_AUDIO_CreatTrdAo(AUDIO_DEV AoDev, AO_CHN AoChn, HI_AUDIO_CBK _pAudioPlay)
+int SAMPLE_PROC_AUDIO_CreatTrdAo(AUDIO_DEV AoDev, AO_CHN AoChn, HI_AUDIO_CBK _pAudioPlay, HI_BOOL _bSaveFile)
 {
 	T_SampleAoInfo	*pstAo = NULL;
 	pstAo = &g_tSampleAo[0];
     pstAo->bStart= HI_TRUE;
+	pstAo->bSaveFile = _bSaveFile;
     pstAo->AoDev = AoDev;
     pstAo->AoChn = AoChn;	
 	pstAo->pAoHandle = _pAudioPlay;	

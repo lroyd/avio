@@ -50,8 +50,8 @@ typedef struct _tagVideoChnnlInfo
 #endif
 
 
-#ifdef HI_VI_CHNNL_1_ON
-	const T_VideoChnnlInfo ctUseChnnl_1 = __VI_SET_CHNL(1, 4,VIDEO_PIX_HD720, VIDEO_VENC_FMT_H264, VIDEO_H264_PRO_HP, VIDEO_COMPRESS_MODE_SEG);
+#ifdef HI_VI_CHNNL_1_ON			//4-13M , 8-19M = 4(6M)
+	const T_VideoChnnlInfo ctUseChnnl_1 = __VI_SET_CHNL(1, 8,VIDEO_PIX_HD720, VIDEO_VENC_FMT_H264, VIDEO_H264_PRO_HP, VIDEO_COMPRESS_MODE_SEG);
 #endif
 
 
