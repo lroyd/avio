@@ -21,6 +21,7 @@
 #include <sys/shm.h>
 
 #include "config_site.h"
+#include "config_vi_chnnl.h"
 #include "avio_api.h"
 #include "sample_comm.h"
 
@@ -34,12 +35,15 @@ AI_CHN      AiChn = 0;
 AUDIO_DEV   AoDev = 0;
 AO_CHN      AoChn = 0;
 ////////////////////////////////////////////////////
+const T_VideoChnnlInfo *g_tVideoChnnlTable[HI_VIDEO_CHNNL_NUM] = {NULL};
+
+
 VIDEO_NORM_E gs_enNorm = VIDEO_ENCODING_MODE_NTSC;
 SAMPLE_RC_E enRcMode= SAMPLE_RC_VBR;
 
-PAYLOAD_TYPE_E enPayLoad[3]= {PT_H264, PT_H264,PT_H264};
+
 PIC_SIZE_E enSize[3] = {PIC_HD720, PIC_VGA, PIC_QVGA}; //PIC_HD720
-COMPRESS_MODE_E enCompressMode[3] = {COMPRESS_MODE_SEG, COMPRESS_MODE_SEG, COMPRESS_MODE_NONE};
+
 
 
 ////////////////////////////////////////////////////
@@ -254,7 +258,6 @@ int HI_AVIO_AudioPlayImmt(char *_pData, int _s32Len)
 static int videoInit(void)
 {
 	int s32Ret = -1, i;
-	int u32Profile = VIDEO_H264_PROFILE_HP;	
 	int s32ChnNum = HI_VIDEO_CHNNL_NUM;
 	SIZE_S stSize;
     VPSS_GRP VpssGrp = 0;
@@ -278,7 +281,7 @@ static int videoInit(void)
         goto EXIT_1;
     }	
 	
-	s32Ret = SAMPLE_COMM_SYS_GetPicSize(gs_enNorm, enSize[0], &stSize);
+	s32Ret = SAMPLE_COMM_SYS_GetPicSize(gs_enNorm, HI_VIDEO_GROUP_SIZE, &stSize);
 	if (HI_SUCCESS != s32Ret)
 	{
 		printf("SAMPLE_COMM_SYS_GetPicSize failed!\n");
@@ -294,7 +297,7 @@ static int videoInit(void)
 	stVpssGrpAttr.enDieMode = VPSS_DIE_MODE_NODIE;
 	stVpssGrpAttr.enPixFmt = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
 	
-	s32Ret = SAMPLE_COMM_VPSS_StartGroup(VpssGrp, &stVpssGrpAttr);
+	s32Ret = SAMPLE_PROC_VPSS_StartGroup(VpssGrp, &stVpssGrpAttr);
 	if (s32Ret)
 	{
 		printf("Start Vpss failed!\n");
@@ -309,45 +312,54 @@ static int videoInit(void)
 	}
 
 	memset(&stVpssChnAttr, 0, sizeof(stVpssChnAttr));
-	for(i = 0; i < s32ChnNum; i++)
+	
+	
+		//2.初始化通道
+	for(i = 0; i < HI_VIDEO_CHNNL_NUM; i++)
 	{
-		s32Ret = SAMPLE_COMM_SYS_GetPicSize(gs_enNorm, enSize[i], &stSize);
-	    if (s32Ret)
-	    {
-	        printf("SAMPLE_COMM_SYS_GetPicSize failed!\n");
-	        goto EXIT_4;
-	    }
-		VpssChn = i;
-		stVpssChnMode.enChnMode 	= VPSS_CHN_MODE_USER;
-		stVpssChnMode.bDouble		= HI_FALSE;
-		stVpssChnMode.enPixelFormat = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
-		stVpssChnMode.u32Width		= stSize.u32Width;
-		stVpssChnMode.u32Height 	= stSize.u32Height;
-		stVpssChnMode.enCompressMode = enCompressMode[i];
-		stVpssChnAttr.s32SrcFrameRate = -1;
-		stVpssChnAttr.s32DstFrameRate = -1;	
-		s32Ret = SAMPLE_COMM_VPSS_EnableChn(VpssGrp, VpssChn, &stVpssChnAttr, &stVpssChnMode, HI_NULL);
-		if (s32Ret)
+		if (g_tVideoChnnlTable[i])
 		{
-			printf("Enable vpss chn failed!\n");
-			goto EXIT_4;
+			s32Ret = SAMPLE_COMM_SYS_GetPicSize(gs_enNorm, g_tVideoChnnlTable[i]->m_u8PixSize, &stSize);
+			if (s32Ret)
+			{
+				printf("SAMPLE_COMM_SYS_GetPicSize failed!\n");
+				goto EXIT_4;
+			}
+			
+			VpssChn = g_tVideoChnnlTable[i]->m_u8Chnnl - 1;	//-1校准
+			VencChn = g_tVideoChnnlTable[i]->m_u8Chnnl - 1;
+			stVpssChnMode.enChnMode 	= VPSS_CHN_MODE_USER;
+			stVpssChnMode.bDouble		= HI_FALSE;
+			stVpssChnMode.enPixelFormat = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
+			stVpssChnMode.u32Width		= stSize.u32Width;
+			stVpssChnMode.u32Height 	= stSize.u32Height;
+			stVpssChnMode.enCompressMode = g_tVideoChnnlTable[i]->m_u8Compress;
+			stVpssChnAttr.s32SrcFrameRate = -1;
+			stVpssChnAttr.s32DstFrameRate = -1;	
+			s32Ret = SAMPLE_COMM_VPSS_EnableChn(VpssGrp, VpssChn, &stVpssChnAttr, &stVpssChnMode, HI_NULL);
+			if (s32Ret)
+			{
+				printf("Enable vpss chn failed!\n");
+				goto EXIT_4;
+			}
+			
+			s32Ret = SAMPLE_COMM_VENC_Start(VencChn, g_tVideoChnnlTable[i]->m_u8PayLoad, \
+											gs_enNorm, g_tVideoChnnlTable[i]->m_u8PixSize, \
+											enRcMode, g_tVideoChnnlTable[i]->m_u8Profile);
+			if (s32Ret)
+			{
+				printf("Start Venc failed!\n");
+				goto EXIT_5;
+			}
+
+			s32Ret = SAMPLE_COMM_VENC_BindVpss(VencChn, VpssGrp, VpssChn);
+			if (s32Ret)
+			{
+				printf("Start Venc failed!\n");
+				goto EXIT_5;
+			}
 		}
 		
-	    VpssChn = i;
-	    VencChn = i;
-	    s32Ret = SAMPLE_COMM_VENC_Start(VencChn, enPayLoad[i], gs_enNorm, enSize[i], enRcMode,u32Profile);
-	    if (s32Ret)
-	    {
-	        printf("Start Venc failed!\n");
-	        goto EXIT_5;
-	    }
-
-	    s32Ret = SAMPLE_COMM_VENC_BindVpss(VencChn, VpssGrp, VpssChn);
-	    if (s32Ret)
-	    {
-	        printf("Start Venc failed!\n");
-	        goto EXIT_5;
-	    }
 	}
 
 	printf("video init ok\n");
@@ -358,10 +370,14 @@ EXIT_5:
 	
 	for(i = 0; i < s32ChnNum; i++)
 	{
-		VpssChn = i;   
-		VencChn = i;		
-		SAMPLE_COMM_VENC_UnBindVpss(VencChn, VpssGrp, VpssChn);
-		SAMPLE_COMM_VENC_Stop(VencChn);		
+		if (g_tVideoChnnlTable[i])
+		{
+			VpssChn = g_tVideoChnnlTable[i]->m_u8Chnnl - 1;	//-1校准
+			VencChn = g_tVideoChnnlTable[i]->m_u8Chnnl - 1;			
+			SAMPLE_COMM_VENC_UnBindVpss(VencChn, VpssGrp, VpssChn);
+			SAMPLE_COMM_VENC_Stop(VencChn);			
+			
+		}
 	}
 
     SAMPLE_COMM_VI_UnBindVpss(stViConfig.enViMode);
@@ -369,8 +385,11 @@ EXIT_5:
 EXIT_4:	
 	for(i = 0; i < s32ChnNum; i++)
 	{
-		VpssChn = i;
-		SAMPLE_COMM_VPSS_DisableChn(VpssGrp, VpssChn);		
+		if (g_tVideoChnnlTable[i])
+		{
+			VpssChn = g_tVideoChnnlTable[i]->m_u8Chnnl - 1;
+			SAMPLE_COMM_VPSS_DisableChn(VpssGrp, VpssChn);	
+		}
 	}
 	
 EXIT_3:     
@@ -401,19 +420,19 @@ int HI_AVIO_VideoSStartChannel(int _s32Chnnl, HI_VIDEO_CBK _pVideoCbk)
 {
 	int s32Ret = -1;
 #ifdef HI_AVIO_VIDEO_ON	
-	int s32ChnNum = HI_VIDEO_CHNNL_NUM;
-	if (_s32Chnnl <= s32ChnNum)
+	
+	if (g_tVideoChnnlTable[_s32Chnnl - 1])
 	{
 #ifndef HI_VIDEO_VENC_SAVE_FILE_ON		
 		if (_pVideoCbk)
-#endif			
+#endif		
 		{
 			s32Ret = SAMPLE_PROC_VIDEO_CreatTrdAi(_s32Chnnl, _pVideoCbk);
 		}		
 	}
 	else
 	{
-		printf("video channel is not open!!!\n");
+		printf("video channel [%d] is not open!!!\n", _s32Chnnl);
 	}
 #else
 	printf("video is not supported!\n");
@@ -425,16 +444,14 @@ int HI_AVIO_VideoSStopChannel(int _s32Chnnl)
 {
 	int s32Ret = -1;
 #ifdef HI_AVIO_VIDEO_ON	
-	int s32ChnNum = HI_VIDEO_CHNNL_NUM;
-	if (_s32Chnnl <= s32ChnNum)
+	if (g_tVideoChnnlTable[_s32Chnnl - 1])
 	{
 		s32Ret = SAMPLE_PROC_VIDEO_DestoryTrdAi(_s32Chnnl);
 	}
 	else
 	{
-		printf("video channel is not open!!!\n");
+		printf("video channel [%d] is not open!!!\n", _s32Chnnl);
 	}
-
 #else
 	printf("video is not supported!\n");
 #endif	
@@ -445,22 +462,52 @@ int HI_AVIO_VideoSStopChannel(int _s32Chnnl)
 
 int HI_AVIO_Init(void)
 {
-	int s32Ret = -1, i;
+	int s32Ret = -1, i, j, k = 0;
 	unsigned int u32BlkSize, u32BlkCnt = 4;
 	VB_CONF_S stVbConf;
 
 	memset(&stVbConf,0,sizeof(VB_CONF_S));
 	
 #ifdef HI_AVIO_VIDEO_ON
-	stVbConf.u32MaxPoolCnt = 128;
-	for(i = 0; i < HI_VIDEO_CHNNL_NUM; i++)
+
+#ifdef HI_VI_CHNNL_1_ON
+	g_tVideoChnnlTable[0] = &ctUseChnnl_1;
+#endif
+
+#ifdef HI_VI_CHNNL_2_ON
+	g_tVideoChnnlTable[1] = &ctUseChnnl_2;
+#endif
+
+#ifdef HI_VI_CHNNL_3_ON
+	g_tVideoChnnlTable[2] = &ctUseChnnl_3;
+#endif
+
+	for (j = 0; j < HI_VIDEO_CHNNL_NUM; j++)
 	{
-		//720P	5-6M	1080P 11-12M	480P  2M	1M
-		u32BlkSize = SAMPLE_COMM_SYS_CalcPicVbBlkSize(gs_enNorm, enSize[i], SAMPLE_PIXEL_FORMAT, SAMPLE_SYS_ALIGN_WIDTH);
-		stVbConf.astCommPool[i].u32BlkSize	= u32BlkSize;
-		stVbConf.astCommPool[i].u32BlkCnt	= u32BlkCnt;
-		printf("use channel [%d] pool size = %d, cnt = %d\n", i+1, u32BlkSize, u32BlkCnt);		
+		for(i = k; i < HI_VIDEO_CHNNL_NUM; i++)
+		{
+			if (g_tVideoChnnlTable[i])
+			{
+				//720P	5-6M	1080P 11-12M	480P  2M	1M
+				u32BlkSize = SAMPLE_COMM_SYS_CalcPicVbBlkSize(gs_enNorm, g_tVideoChnnlTable[i]->m_u8PixSize, \
+																SAMPLE_PIXEL_FORMAT, SAMPLE_SYS_ALIGN_WIDTH);
+				stVbConf.astCommPool[j].u32BlkSize	= u32BlkSize;
+				stVbConf.astCommPool[j].u32BlkCnt	= u32BlkCnt;
+				printf("use channel [%d] pool size = %d, cnt = %d\n", g_tVideoChnnlTable[i]->m_u8Chnnl, u32BlkSize, u32BlkCnt);	
+				
+				k = i + 1;
+				break;
+			}
+		}		
 	}
+	if (k == 0)
+	{
+		//没有可用通道配置，err函数直接返回
+        printf("No channel is available. Configure the channel first\n");
+        goto EXIT;
+	}
+	
+	stVbConf.u32MaxPoolCnt = 128;
 #endif	
 	
     s32Ret = SAMPLE_COMM_SYS_Init(&stVbConf);

@@ -22,46 +22,20 @@
 
 
 #define HI_AVIO_VIDEO_ON
-	#define VIDEO_PIX_D1				(4)
-	#define VIDEO_PIX_QVGA				(6)	//320 * 240
-	#define VIDEO_PIX_VGA				(7)	//640 * 480
-	#define VIDEO_PIX_XGA				(8) //1024 * 768
-	#define VIDEO_PIX_HD720				(16)//1280 * 720
-	#define VIDEO_PIX_HD1080			(17)//1920 * 1080
-	
-	#define VIDEO_PIX_FMT_RGB_565				(7)
-	#define VIDEO_PIX_FMT_YUV_PLANAR_422		(19)
-	#define VIDEO_PIX_FMT_YUV_PLANAR_420		(20)
-	#define VIDEO_PIX_FMT_YUV_PLANAR_444		(21)
-	#define VIDEO_PIX_FMT_YUV_SEMIPLANAR_422	(22)
-	#define VIDEO_PIX_FMT_YUV_SEMIPLANAR_420	(23)	//注意：这个SAMPLE_PIXEL_FORMAT 在ive vpss都有用
-	#define VIDEO_PIX_FMT_YUV_SEMIPLANAR_444	(24)
-	#define VIDEO_PIX_FMT_UYVY_PACKAGE_422		(25)
-	#define VIDEO_PIX_FMT_YUYV_PACKAGE_422		(26)
-	#define VIDEO_PIX_FMT_VYUY_PACKAGE_422		(27)
-	#define VIDEO_PIX_FMT_YCbCr_PLANAR			(28)
-	
-	#define VIDEO_VENC_FMT_H264			(96)
-	#define VIDEO_VENC_FMT_H265			(265)
-	#define VIDEO_VENC_FMT_MJPEG		(1002)
-	
-	#define VIDEO_H264_PROFILE_BASELINE	(0)
-	#define VIDEO_H264_PROFILE_MP		(1)
-	#define VIDEO_H264_PROFILE_HP		(2)
-/////////////////////////////////////////////////////////////////////
-	//#define HI_VIDEO_VENC_SAVE_FILE_ON
-
 	#define	HI_VIDEO_CHNNL_NUM			(3)	//视频通道路数 1/2/3
+	/*************************************************************/
+	#define HI_VIDEO_VENC_SAVE_FILE_ON		//视频文件存储
+	/*************************************************************/
+	//#define	HI_VIDEO_GROUP_CROP			//视频裁剪属性，必须小于HI_VIDEO_GROUP_SIZE
+	/*************************************************************/
+	#define HI_VI_CHNNL_1_ON		//启用通道1,只能放大
+	//#define HI_VI_CHNNL_2_ON		//启用通道2,只能缩小
+	#define HI_VI_CHNNL_3_ON		//启用通道3
+	/*************************************************************/
+	//#define USE_SIMPLE_THREAD		
 	
 	
 	
-	
-	
-	
-	
-	
-	
-
 #endif
 
 

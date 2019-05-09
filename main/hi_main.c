@@ -161,18 +161,18 @@ int main()
 	
 	ret = HI_AVIO_AudioSStart(audio_cap, audio_play);
 
-#if 0	
+#if 1	
 	HI_AVIO_VideoSStartChannel(1, NULL);
 	HI_AVIO_VideoSStartChannel(2, NULL);
 	HI_AVIO_VideoSStartChannel(3, NULL);
-#endif	
+#else	
 
 	HI_AVIO_VideoSStartChannel(1, video_data3);
 	//HI_AVIO_VideoSStartChannel(3, video_data3);
 	//ret = HI_AVIO_VideoSStartChannel(3, video_data3);
 	//ret = HI_AVIO_VideoSStartChannel(1, video_data2);
 	//printf("audio start %d\n", ret);
-	
+#endif	
 	while(1)
 	{
 		sleep(1);
