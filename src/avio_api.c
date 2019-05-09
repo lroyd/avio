@@ -312,9 +312,7 @@ static int videoInit(void)
 	}
 
 	memset(&stVpssChnAttr, 0, sizeof(stVpssChnAttr));
-	
-	
-		//2.初始化通道
+
 	for(i = 0; i < HI_VIDEO_CHNNL_NUM; i++)
 	{
 		if (g_tVideoChnnlTable[i])
@@ -406,12 +404,13 @@ EXIT_1:
 static int videoDeinit(void)
 {
 	int i;
-
 	for(i = 0; i < HI_VIDEO_CHNNL_NUM; i++)
 	{
-		HI_AVIO_VideoSStopChannel(i+1);
+		if (g_tVideoChnnlTable[i])
+		{
+			HI_AVIO_VideoSStopChannel(i+1);
+		}
 	}
-	
 	
 	return 0;
 }
@@ -428,6 +427,27 @@ int HI_AVIO_VideoSStartChannel(int _s32Chnnl, HI_VIDEO_CBK _pVideoCbk)
 #endif		
 		{
 			s32Ret = SAMPLE_PROC_VIDEO_CreatTrdAi(_s32Chnnl, _pVideoCbk);
+		}		
+	}
+	else
+	{
+		printf("video channel [%d] is not open!!!\n", _s32Chnnl);
+	}
+#else
+	printf("video is not supported!\n");
+#endif
+	return s32Ret;
+}
+
+int HI_AVIO_VideoSetTestCancel(int _s32Chnnl, HI_VIDEO_CANCEL _pCancel, void *_pArg)
+{
+	int s32Ret = -1;
+#ifdef HI_AVIO_VIDEO_ON	
+	if (g_tVideoChnnlTable[_s32Chnnl - 1])
+	{		
+		if (_pCancel)		
+		{
+			s32Ret = SAMPLE_PROC_VIDEO_SetCancel(_s32Chnnl, _pCancel, _pArg);
 		}		
 	}
 	else
@@ -492,8 +512,8 @@ int HI_AVIO_Init(void)
 				u32BlkSize = SAMPLE_COMM_SYS_CalcPicVbBlkSize(gs_enNorm, g_tVideoChnnlTable[i]->m_u8PixSize, \
 																SAMPLE_PIXEL_FORMAT, SAMPLE_SYS_ALIGN_WIDTH);
 				stVbConf.astCommPool[j].u32BlkSize	= u32BlkSize;
-				stVbConf.astCommPool[j].u32BlkCnt	= u32BlkCnt;
-				printf("use channel [%d] pool size = %d, cnt = %d\n", g_tVideoChnnlTable[i]->m_u8Chnnl, u32BlkSize, u32BlkCnt);	
+				stVbConf.astCommPool[j].u32BlkCnt	= g_tVideoChnnlTable[i]->m_u8BlkCnt;
+				printf("use channel [%d] pool size = %d, cnt = %d\n", g_tVideoChnnlTable[i]->m_u8Chnnl, u32BlkSize, g_tVideoChnnlTable[i]->m_u8BlkCnt);	
 				
 				k = i + 1;
 				break;

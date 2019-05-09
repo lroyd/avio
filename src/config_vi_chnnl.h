@@ -10,7 +10,7 @@
 #include "config_site.h"
 
 
-#define __VI_SET_CHNL(a,b,c,d,e)      {a,b,c,d,e} 	
+#define __VI_SET_CHNL(a,b,c,d,e,f)      {a,b,c,d,e,f} 	
 
 typedef struct _tagVideoChnnlInfo
 {
@@ -51,17 +51,17 @@ typedef struct _tagVideoChnnlInfo
 
 
 #ifdef HI_VI_CHNNL_1_ON
-	const T_VideoChnnlInfo ctUseChnnl_1 = __VI_SET_CHNL(1, VIDEO_PIX_HD720, VIDEO_VENC_FMT_H264, VIDEO_H264_PRO_HP, VIDEO_COMPRESS_MODE_SEG);
+	const T_VideoChnnlInfo ctUseChnnl_1 = __VI_SET_CHNL(1, 4,VIDEO_PIX_HD720, VIDEO_VENC_FMT_H264, VIDEO_H264_PRO_HP, VIDEO_COMPRESS_MODE_SEG);
 #endif
 
 
 #ifdef HI_VI_CHNNL_2_ON
-	const T_VideoChnnlInfo ctUseChnnl_2 = __VI_SET_CHNL(2, VIDEO_PIX_VGA, VIDEO_VENC_FMT_H264, VIDEO_H264_PRO_HP, VIDEO_COMPRESS_MODE_SEG);
+	const T_VideoChnnlInfo ctUseChnnl_2 = __VI_SET_CHNL(2, 4,VIDEO_PIX_VGA, VIDEO_VENC_FMT_H264, VIDEO_H264_PRO_HP, VIDEO_COMPRESS_MODE_SEG);
 #endif
 
 
 #ifdef HI_VI_CHNNL_3_ON
-	const T_VideoChnnlInfo ctUseChnnl_3 = __VI_SET_CHNL(3, VIDEO_PIX_QVGA, VIDEO_VENC_FMT_H264, VIDEO_H264_PRO_HP, VIDEO_COMPRESS_MODE_NONE);
+	const T_VideoChnnlInfo ctUseChnnl_3 = __VI_SET_CHNL(3, 4,VIDEO_PIX_QVGA, VIDEO_VENC_FMT_H264, VIDEO_H264_PRO_HP, VIDEO_COMPRESS_MODE_NONE);
 #endif
 
 
