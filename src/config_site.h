@@ -8,6 +8,8 @@
 #define __CONFIG_AVIO_H__
 
 
+//#define INIPARSE_USE_ON		//使用ini动态解析
+
 //#define HI_AVIO_AUDIO_ON
 //音频参数设置
 	#define	HI_AUDIO_SAMPLE_RATE		(8000)	//采样率
@@ -22,7 +24,7 @@
 
 
 #define HI_AVIO_VIDEO_ON
-	#define	HI_VIDEO_CHNNL_NUM			(3)	//视频通道路数 1/2/3
+	#define	HI_VIDEO_CHNNL_NUM			(3)	//视频通道路数 1/2/3(固定不可修改)
 	/*************************************************************/
 	//#define HI_VIDEO_VENC_SAVE_FILE_ON		//视频文件存储
 	/*************************************************************/
@@ -31,8 +33,17 @@
 	//#define HI_VI_CHNNL_1_ON		//启用通道1,只能放大
 	//#define HI_VI_CHNNL_2_ON		//启用通道2,只能缩小
 	#define HI_VI_CHNNL_3_ON		//启用通道3
+	
 	/*************************************************************/
 	#define USE_SIMPLE_THREAD		
+	
+
+////////////////////////////////////////////////////////////////////////
+extern int s32CropRect_X;
+extern int s32CropRect_Y;
+extern int s32CropRect_W;
+extern int s32CropRect_H;	
+	
 	
 	
 	

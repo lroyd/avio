@@ -21,9 +21,10 @@
 #include <sys/shm.h>
 
 #include "config_site.h"
-#include "config_vi_chnnl.h"
 #include "avio_api.h"
 #include "sample_comm.h"
+
+#include "config_vi_chnnl.h"
 
 
 ////////////////////////////////////////////////////
@@ -40,9 +41,58 @@ const T_VideoChnnlInfo *g_tVideoChnnlTable[HI_VIDEO_CHNNL_NUM] = {NULL};
 
 VIDEO_NORM_E gs_enNorm = VIDEO_ENCODING_MODE_NTSC;
 SAMPLE_RC_E enRcMode= SAMPLE_RC_VBR;
+////////////////////////////////////////////////////
+int s32GroupSize	= 0;
+
+int s32CropRect_X	= 0;
+int s32CropRect_Y	= 0;
+int s32CropRect_W	= 0;
+int s32CropRect_H	= 0;
 
 
 
+
+
+////////////////////////////////////////////////////
+#ifndef INIPARSE_USE_ON
+static int configParse(void)
+{
+#ifdef HI_AVIO_VIDEO_ON
+	
+	s32GroupSize	= HI_VIDEO_GROUP_SIZE; 
+#ifdef HI_VIDEO_GROUP_CROP	
+	s32CropRect_X	= HI_VIDEO_CROP_RECT_X;
+	s32CropRect_Y	= HI_VIDEO_CROP_RECT_Y;
+	s32CropRect_W	= HI_VIDEO_CROP_RECT_W;
+	s32CropRect_H	= HI_VIDEO_CROP_RECT_H;
+#endif	
+
+
+#ifdef HI_VI_CHNNL_1_ON
+	g_tVideoChnnlTable[0] = &ctUseChnnl_1;
+#endif
+
+#ifdef HI_VI_CHNNL_2_ON
+	g_tVideoChnnlTable[1] = &ctUseChnnl_2;
+#endif
+
+#ifdef HI_VI_CHNNL_3_ON
+	g_tVideoChnnlTable[2] = &ctUseChnnl_3;
+#endif	
+
+#endif
+	return 0;
+}
+
+#else
+static int configParse(void)
+{
+	int s32SaveFile = 0;
+
+	
+	return 0;
+}
+#endif
 ////////////////////////////////////////////////////
 
 static int audioInit(void)
@@ -278,7 +328,7 @@ static int videoInit(void)
         goto EXIT_1;
     }	
 	
-	s32Ret = SAMPLE_COMM_SYS_GetPicSize(gs_enNorm, HI_VIDEO_GROUP_SIZE, &stSize);
+	s32Ret = SAMPLE_COMM_SYS_GetPicSize(gs_enNorm, s32GroupSize, &stSize);
 	if (HI_SUCCESS != s32Ret)
 	{
 		printf("SAMPLE_COMM_SYS_GetPicSize failed!\n");
@@ -483,21 +533,9 @@ int HI_AVIO_Init(void)
 	unsigned int u32BlkSize, u32BlkCnt = 4;
 	VB_CONF_S stVbConf;
 
-	memset(&stVbConf,0,sizeof(VB_CONF_S));
+	configParse();
 	
-#ifdef HI_AVIO_VIDEO_ON
-
-#ifdef HI_VI_CHNNL_1_ON
-	g_tVideoChnnlTable[0] = &ctUseChnnl_1;
-#endif
-
-#ifdef HI_VI_CHNNL_2_ON
-	g_tVideoChnnlTable[1] = &ctUseChnnl_2;
-#endif
-
-#ifdef HI_VI_CHNNL_3_ON
-	g_tVideoChnnlTable[2] = &ctUseChnnl_3;
-#endif
+	memset(&stVbConf,0,sizeof(VB_CONF_S));
 
 	for (j = 0; j < HI_VIDEO_CHNNL_NUM; j++)
 	{
@@ -525,7 +563,6 @@ int HI_AVIO_Init(void)
 	}
 	
 	stVbConf.u32MaxPoolCnt = 128;
-#endif	
 	
     s32Ret = SAMPLE_COMM_SYS_Init(&stVbConf);
     if (s32Ret)

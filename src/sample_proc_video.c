@@ -392,10 +392,10 @@ HI_S32 SAMPLE_PROC_VPSS_StartGroup(VPSS_GRP VpssGrp, VPSS_GRP_ATTR_S *pstVpssGrp
 	
 	stCropInfo.bEnable = 1;
 	stCropInfo.enCropCoordinate = VPSS_CROP_ABS_COOR;
-	stCropInfo.stCropRect.s32X = HI_VIDEO_CROP_RECT_X;
-	stCropInfo.stCropRect.s32Y = HI_VIDEO_CROP_RECT_Y;
-	stCropInfo.stCropRect.u32Width = HI_VIDEO_CROP_RECT_W;
-	stCropInfo.stCropRect.u32Height = HI_VIDEO_CROP_RECT_H;
+	stCropInfo.stCropRect.s32X = s32CropRect_X;
+	stCropInfo.stCropRect.s32Y = s32CropRect_Y;
+	stCropInfo.stCropRect.u32Width = s32CropRect_W;
+	stCropInfo.stCropRect.u32Height = s32CropRect_H;
 	s32Ret = HI_MPI_VPSS_SetGrpCrop(VpssGrp, &stCropInfo);
 	if(s32Ret != HI_SUCCESS)
 	{
