@@ -14,8 +14,9 @@ typedef int (*HI_AUDIO_CBK)(char *, int);
 typedef int (*HI_VIDEO_CBK)(int, char *, int, unsigned long long);
 typedef int (*HI_VIDEO_CANCEL)(void *);	//给用户提供回调取消点
 
-void HI_AVIO_SignalHandle(int);
 int HI_AVIO_LoadConfig(const char *_pConfigPath);
+
+void HI_AVIO_SignalHandle(int);
 int HI_AVIO_Init(void);
 int HI_AVIO_Deinit(void);
 

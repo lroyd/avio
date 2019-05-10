@@ -605,11 +605,12 @@ static int defaultParseConfig(void)
 }
 
 
+
 int HI_AVIO_LoadConfig(const char *_pConfigPath)
 {
 	if (_pConfigPath)
 	{
-		iniAvioParseConfig(_pConfigPath);
+		iniAvioParseConfig(_pConfigPath, &g_tAudioConfigInfo, &g_tVideoConfigInfo, g_tVideoChnnlTable);
 	}
 	else
 	{
@@ -654,7 +655,7 @@ int HI_AVIO_Init(void)
 		{
 			//没有可用通道配置，err函数直接返回
 			printf("No channel is available. Configure the channel first\n");
-			goto EXIT;
+			//goto EXIT;
 		}
 		
 		stVbConf.u32MaxPoolCnt = 128;
