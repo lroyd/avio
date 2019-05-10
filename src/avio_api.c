@@ -29,17 +29,9 @@
 
 ////////////////////////////////////////////////////
 //只有一路音频
-//T_AudioParamInfo	g_tAudioParamInfo = {8000, 160 1};
+T_AudioConfigInfo g_tAudioConfigInfo = {0};
 
-static unsigned char bAudioEnable = 0;
-static unsigned char bAudioEC = 0;	//回环消音
-static unsigned char bAudioLookup = 0;	//回环测试
 
-static int s32AoVolume = 0;	//输出增益
-static int s32AiVolume = 0;	//输入增益
-
-static unsigned char bAudioAiSave = 0;
-static unsigned char bAudioAoSave = 0;
 
 static int s32AiChnCnt = 1;
 static int s32AoChnCnt = 1;
@@ -54,118 +46,10 @@ const T_VideoChnnlInfo *g_tVideoChnnlTable[HI_VIDEO_CHNNL_NUM] = {NULL};
 VIDEO_NORM_E gs_enNorm = VIDEO_ENCODING_MODE_NTSC;
 SAMPLE_RC_E enRcMode= SAMPLE_RC_VBR;
 ////////////////////////////////////////////////////
-static unsigned char bVideoEnable = 0;
-static unsigned char bVideoSave = 0;
-static int s32GroupSize	= 0;
-
-T_VpssCropInfo g_tCropInfo = {0};
+T_VideoConfigInfo g_tVideoConfigInfo = {0};
 
 
 
-////////////////////////////////////////////////////
-//解析参数：音频+视频
-#ifndef INIPARSE_USE_ON
-static int configParse(void)	
-{
-#ifdef HI_AVIO_AUDIO_ON
-	bAudioEnable = 1;
-#endif	
-	
-	if (bAudioEnable)
-	{
-#if 0		
-#ifdef HI_AUDIO_SAMPLE_RATE		
-		g_tAudioParamInfo.m_u32Sample = HI_AUDIO_SAMPLE_RATE;
-#endif
-
-#ifdef 	HI_AUDIO_PTNUMPERFRM
-		g_tAudioParamInfo.m_u32PtNumPerfrm = HI_AUDIO_PTNUMPERFRM;
-#endif
-
-#ifdef HI_AUDIO_BIT_WIDTH
-		g_tAudioParamInfo.m_u32BitWidth = HI_AUDIO_BIT_WIDTH;
-#endif
-#endif		
-		
-#ifdef HI_AUDIO_EC_ON		
-		bAudioEC = 1;
-#endif
-
-#ifdef HI_AUDIO_LOOKUP_ON
-		bAudioLookup = 1;
-#endif
-
-#ifdef HI_AUDIO_AO_VOLUME
-		s32AoVolume = HI_AUDIO_AO_VOLUME;
-#endif
-
-#ifdef HI_AUDIO_AI_VOLUME
-		s32AiVolume = HI_AUDIO_AI_VOLUME;
-#endif
-
-#ifdef HI_AUDIO_CAP_SAVE_FILE_ON
-		bAudioAiSave = 1;
-#endif
-
-#ifdef HI_AUDIO_PLAY_SAVE_FILE_ON
-		bAudioAoSave = 1;
-#endif
-
-	}
-	
-	
-	
-
-#ifdef HI_AVIO_VIDEO_ON
-	bVideoEnable = 1;
-#endif	
-
-	if (bVideoEnable)
-	{
-#ifdef HI_VIDEO_VENC_SAVE_FILE_ON
-		bVideoSave = 1;
-#endif		
-		
-		s32GroupSize	= HI_VIDEO_GROUP_SIZE; 
-		
-		
-#ifdef HI_VIDEO_GROUP_CROP	
-		g_tCropInfo.m_bEnable = 1;
-		g_tCropInfo.m_u32X	= HI_VIDEO_CROP_RECT_X;
-		g_tCropInfo.m_u32Y	= HI_VIDEO_CROP_RECT_Y;
-		g_tCropInfo.m_u32W	= HI_VIDEO_CROP_RECT_W;
-		g_tCropInfo.m_u32H	= HI_VIDEO_CROP_RECT_H;
-#endif	
-
-
-#ifdef HI_VI_CHNNL_1_ON
-		g_tVideoChnnlTable[0] = &ctUseChnnl_1;
-#endif
-
-#ifdef HI_VI_CHNNL_2_ON
-		g_tVideoChnnlTable[1] = &ctUseChnnl_2;
-#endif
-
-#ifdef HI_VI_CHNNL_3_ON
-		g_tVideoChnnlTable[2] = &ctUseChnnl_3;
-#endif		
-		
-	}
-	
-
-	return 0;
-}
-
-#else
-static int configParse(void)
-{
-	int s32SaveFile = 0;
-
-	
-	return 0;
-}
-#endif
-////////////////////////////////////////////////////
 
 static int audioInit(void)
 {
@@ -199,7 +83,7 @@ static int audioInit(void)
 	HI_VOID     *pAiVqeAttr = NULL, *pAoVqeAttr = NULL;
 	HI_U32		u32AiVqeType = 0, u32AoVqeType = 0;
 	
-	if (bAudioEC)
+	if (g_tAudioConfigInfo.m_bEC)
 	{
 		stAiVqeAttr.s32WorkSampleRate    = HI_AUDIO_SAMPLE_RATE;
 		stAiVqeAttr.s32FrameSample       = HI_AUDIO_PTNUMPERFRM;
@@ -238,7 +122,7 @@ static int audioInit(void)
 		u32AoVqeType = 1;		
 	}
 
-    s32Ret = SAMPLE_PROC_AUDIO_StartAi(AiDev, s32AiChnCnt, &stAioAttr, enOutSampleRate, HI_FALSE, pAiVqeAttr, u32AiVqeType, s32AiVolume);
+    s32Ret = SAMPLE_PROC_AUDIO_StartAi(AiDev, s32AiChnCnt, &stAioAttr, enOutSampleRate, HI_FALSE, pAiVqeAttr, u32AiVqeType, g_tAudioConfigInfo.m_s32AiVolume);
     if (s32Ret)
     {
 		printf("audio start ai error\n");
@@ -252,7 +136,7 @@ static int audioInit(void)
         return -1;
     }
     
-	SAMPLE_COMM_AUDIO_SetAoVolume(AoDev, s32AoVolume);
+	SAMPLE_COMM_AUDIO_SetAoVolume(AoDev, g_tAudioConfigInfo.m_s32AoVolume);
 
     printf("ai(%d,%d) bind to ao(%d,%d) ok\n", AiDev, AiChn, AoDev, AoChn);
 	
@@ -263,7 +147,7 @@ static int audioDeinit(void)
 {
 	int s32Ret = 0;
 	
-	if (bAudioLookup)
+	if (g_tAudioConfigInfo.m_bLookup)
 	{
 		SAMPLE_COMM_AUDIO_DestoryTrdAi(AiDev, AiChn);
 	}
@@ -294,9 +178,9 @@ static int audioDeinit(void)
 int HI_AVIO_AudioSStart(HI_AUDIO_CBK _pAudioCap, HI_AUDIO_CBK _pAudioPlay)
 {
 	int s32Ret = -1;
-	if (bAudioEnable)
+	if (g_tAudioConfigInfo.m_bEnable)
 	{
-		if (bAudioLookup)
+		if (g_tAudioConfigInfo.m_bLookup)
 		{
 			s32Ret = SAMPLE_COMM_AUDIO_CreatTrdAiAo(AiDev, AiChn, AoDev, AoChn);
 			if (s32Ret)
@@ -307,9 +191,10 @@ int HI_AVIO_AudioSStart(HI_AUDIO_CBK _pAudioCap, HI_AUDIO_CBK _pAudioPlay)
 		}
 		else
 		{
+			
 			if (_pAudioCap)
 			{
-				s32Ret = SAMPLE_PROC_AUDIO_CreatTrdAi(AiDev, AiChn, _pAudioCap, bAudioAiSave);
+				s32Ret = SAMPLE_PROC_AUDIO_CreatTrdAi(AiDev, AiChn, _pAudioCap, g_tAudioConfigInfo.m_bAiSave);
 				if (s32Ret)
 				{
 					printf("audio start thread ai error\n");
@@ -319,7 +204,7 @@ int HI_AVIO_AudioSStart(HI_AUDIO_CBK _pAudioCap, HI_AUDIO_CBK _pAudioPlay)
 
 			if (_pAudioPlay)
 			{
-				s32Ret = SAMPLE_PROC_AUDIO_CreatTrdAo(AoDev, AoChn, _pAudioPlay, bAudioAoSave);
+				s32Ret = SAMPLE_PROC_AUDIO_CreatTrdAo(AoDev, AoChn, _pAudioPlay, g_tAudioConfigInfo.m_bAoSave);
 				if (s32Ret)
 				{
 					printf("audio start thread ao error\n");
@@ -340,9 +225,9 @@ EXIT:
 
 int HI_AVIO_AudioSStop(void)
 {
-	if (bAudioEnable)
+	if (g_tAudioConfigInfo.m_bEnable)
 	{
-		if (bAudioLookup)
+		if (g_tAudioConfigInfo.m_bLookup)
 		{
 			SAMPLE_COMM_AUDIO_DestoryTrdAi(AiDev, AiChn);
 		}
@@ -362,7 +247,7 @@ int HI_AVIO_AudioSStop(void)
 
 int HI_AVIO_AudioSetPlayVolume(char _s8Volume)
 {
-	if (bAudioEnable)
+	if (g_tAudioConfigInfo.m_bEnable)
 	{
 		SAMPLE_COMM_AUDIO_SetAoVolume(AoDev, _s8Volume);
 	}
@@ -374,7 +259,7 @@ int HI_AVIO_AudioSetPlayVolume(char _s8Volume)
 
 int HI_AVIO_AudioPlayImmt(char *_pData, int _s32Len)
 {
-	if (bAudioEnable)
+	if (g_tAudioConfigInfo.m_bEnable)
 	{
 		//if (_s32Len == (HI_AUDIO_PTNUMPERFRM * (HI_AUDIO_BIT_WIDTH + 1)))
 		{
@@ -416,7 +301,7 @@ static int videoInit(void)
         goto EXIT_1;
     }	
 	
-	s32Ret = SAMPLE_COMM_SYS_GetPicSize(gs_enNorm, s32GroupSize, &stSize);
+	s32Ret = SAMPLE_COMM_SYS_GetPicSize(gs_enNorm, g_tVideoConfigInfo.m_s32GroupSize, &stSize);
 	if (HI_SUCCESS != s32Ret)
 	{
 		printf("SAMPLE_COMM_SYS_GetPicSize failed!\n");
@@ -432,7 +317,7 @@ static int videoInit(void)
 	stVpssGrpAttr.enDieMode = VPSS_DIE_MODE_NODIE;
 	stVpssGrpAttr.enPixFmt = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
 	
-	s32Ret = SAMPLE_PROC_VPSS_StartGroup(VpssGrp, &stVpssGrpAttr, &g_tCropInfo);
+	s32Ret = SAMPLE_PROC_VPSS_StartGroup(VpssGrp, &stVpssGrpAttr, &g_tVideoConfigInfo.in_tCrop);
 	if (s32Ret)
 	{
 		printf("Start Vpss failed!\n");
@@ -554,16 +439,16 @@ int HI_AVIO_VideoSStartChannel(int _s32Chnnl, HI_VIDEO_CBK _pVideoCbk)
 {
 	int s32Ret = -1;
 	
-	if (bVideoEnable)
+	if (g_tVideoConfigInfo.m_bEnable)
 	{
 		if (g_tVideoChnnlTable[_s32Chnnl - 1])
 		{	
-			if (bVideoSave == 0 && _pVideoCbk == NULL)
+			if (g_tVideoConfigInfo.m_bSave == 0 && _pVideoCbk == NULL)
 			{
 				printf("video callback is empty!!!\n");
 				return s32Ret;
 			}
-			s32Ret = SAMPLE_PROC_VIDEO_CreatTrdAi(_s32Chnnl, _pVideoCbk, bVideoSave);
+			s32Ret = SAMPLE_PROC_VIDEO_CreatTrdAi(_s32Chnnl, _pVideoCbk, g_tVideoConfigInfo.m_bSave);
 		}
 		else
 		{
@@ -581,7 +466,7 @@ int HI_AVIO_VideoSStartChannel(int _s32Chnnl, HI_VIDEO_CBK _pVideoCbk)
 int HI_AVIO_VideoSetTestCancel(int _s32Chnnl, HI_VIDEO_CANCEL _pCancel, void *_pArg)
 {
 	int s32Ret = -1;
-	if (bVideoEnable)
+	if (g_tVideoConfigInfo.m_bEnable)
 	{
 		if (g_tVideoChnnlTable[_s32Chnnl - 1])
 		{		
@@ -606,7 +491,7 @@ int HI_AVIO_VideoSetTestCancel(int _s32Chnnl, HI_VIDEO_CANCEL _pCancel, void *_p
 int HI_AVIO_VideoSStopChannel(int _s32Chnnl)
 {
 	int s32Ret = -1;
-	if (bVideoEnable)
+	if (g_tVideoConfigInfo.m_bEnable)
 	{
 		if (g_tVideoChnnlTable[_s32Chnnl - 1])
 		{
@@ -625,7 +510,116 @@ int HI_AVIO_VideoSStopChannel(int _s32Chnnl)
 	return s32Ret;
 }
 
+////////////////////////////////////////////////////
+//解析参数：音频+视频
+static int defaultParseConfig(void)
+{
+	/* 音频参数 */
+	T_AudioConfigInfo *pAudio = &g_tAudioConfigInfo;
+#ifdef HI_AVIO_AUDIO_ON
+	pAudio->m_bEnable = 1;
+#endif	
+	
+	if (pAudio->m_bEnable)
+	{
+#if 0		
+#ifdef HI_AUDIO_SAMPLE_RATE
+		pAudio->in_tAudio.m_u32Sample = HI_AUDIO_SAMPLE_RATE;
+#endif
 
+#ifdef 	HI_AUDIO_PTNUMPERFRM
+		pAudio->in_tAudio.m_u32PtNumPerfrm = HI_AUDIO_PTNUMPERFRM;
+#endif
+
+#ifdef HI_AUDIO_BIT_WIDTH
+		pAudio->in_tAudio.m_u32BitWidth = HI_AUDIO_BIT_WIDTH;
+#endif
+#endif		
+		
+#ifdef HI_AUDIO_EC_ON	
+		pAudio->m_bEC = 1;
+#endif
+
+#ifdef HI_AUDIO_LOOKUP_ON
+		pAudio->m_bLookup = 1;
+#endif
+
+#ifdef HI_AUDIO_AI_VOLUME
+		pAudio->m_s32AiVolume = HI_AUDIO_AI_VOLUME;
+#endif
+
+#ifdef HI_AUDIO_AO_VOLUME
+		pAudio->m_s32AoVolume = HI_AUDIO_AO_VOLUME;
+#endif
+
+#ifdef HI_AUDIO_CAP_SAVE_FILE_ON
+		pAudio->m_bAiSave = 1;
+#endif
+
+#ifdef HI_AUDIO_PLAY_SAVE_FILE_ON
+		pAudio->m_bAoSave = 1;
+#endif
+
+	}
+	
+	/* 视频参数 */
+	T_VideoConfigInfo *pVideo = &g_tVideoConfigInfo;
+	
+#ifdef HI_AVIO_VIDEO_ON
+	pVideo->m_bEnable = 1;
+#endif	
+
+	if (pVideo->m_bEnable)
+	{
+		pVideo->m_s32GroupSize = HI_VIDEO_GROUP_SIZE; 
+		
+#ifdef HI_VIDEO_VENC_SAVE_FILE_ON
+		pVideo->m_bSave = 1;
+#endif		
+		
+#ifdef HI_VIDEO_GROUP_CROP	
+		pVideo->in_tCrop.m_bEnable = 1;
+		pVideo->in_tCrop.m_u32X	= HI_VIDEO_CROP_RECT_X;
+		pVideo->in_tCrop.m_u32Y	= HI_VIDEO_CROP_RECT_Y;
+		pVideo->in_tCrop.m_u32W	= HI_VIDEO_CROP_RECT_W;
+		pVideo->in_tCrop.m_u32H	= HI_VIDEO_CROP_RECT_H;
+		
+#endif	
+
+
+#ifdef HI_VI_CHNNL_1_ON
+		g_tVideoChnnlTable[0] = &ctUseChnnl_1;
+#endif
+
+#ifdef HI_VI_CHNNL_2_ON
+		g_tVideoChnnlTable[1] = &ctUseChnnl_2;
+#endif
+
+#ifdef HI_VI_CHNNL_3_ON
+		g_tVideoChnnlTable[2] = &ctUseChnnl_3;
+#endif		
+		
+	}
+	
+	return 0;
+}
+
+
+int HI_AVIO_LoadConfig(const char *_pConfigPath)
+{
+	if (_pConfigPath)
+	{
+		iniAvioParseConfig(_pConfigPath);
+	}
+	else
+	{
+		defaultParseConfig();
+	}
+	
+	return 0;
+}
+
+////////////////////////////////////////////////////
 
 int HI_AVIO_Init(void)
 {
@@ -633,10 +627,10 @@ int HI_AVIO_Init(void)
 	unsigned int u32BlkSize, u32BlkCnt = 4;
 	VB_CONF_S stVbConf;
 
-	configParse();	
+
 	memset(&stVbConf,0,sizeof(VB_CONF_S));
 
-	if (bVideoEnable)
+	if (g_tVideoConfigInfo.m_bEnable)
 	{
 		for (j = 0; j < HI_VIDEO_CHNNL_NUM; j++)
 		{
@@ -674,7 +668,7 @@ int HI_AVIO_Init(void)
         goto EXIT;
     }
 
-	if (bAudioEnable)
+	if (g_tAudioConfigInfo.m_bEnable)
 	{
 		s32Ret = audioInit();
 		if (s32Ret)
@@ -684,7 +678,7 @@ int HI_AVIO_Init(void)
 		}		
 	}
 
-	if (bVideoEnable)
+	if (g_tVideoConfigInfo.m_bEnable)
 	{
 		s32Ret = videoInit();
 		if (s32Ret)
@@ -704,12 +698,12 @@ EXIT:
 
 int HI_AVIO_Deinit(void)
 {
-	if (bAudioEnable)
+	if (g_tAudioConfigInfo.m_bEnable)
 	{
 		audioDeinit();
 	}
 
-	if (bVideoEnable)
+	if (g_tVideoConfigInfo.m_bEnable)
 	{
 		videoDeinit();
 		SAMPLE_COMM_ISP_Stop();	

@@ -7,29 +7,6 @@
 #ifndef __AVIO_API_H__
 #define __AVIO_API_H__
 
-#define	HI_AUDIO_SAMPLE_RATE		(8000)	//采样率
-#define	HI_AUDIO_BIT_WIDTH			(1)		//8:0 16:1
-#define HI_AUDIO_PTNUMPERFRM		(160)
-
-typedef struct _tagAudioParamInfo
-{
-    int				m_u32Sample;
-	int				m_u32PtNumPerfrm;
-    unsigned char	m_u32BitWidth;
-}T_AudioParamInfo;
-
-
-
-#define	HI_VIDEO_CHNNL_NUM			(3)	//视频通道路数 1/2/3(固定不可修改)
-
-typedef struct _tagVpssCrop
-{
-	unsigned char   m_bEnable;
-    int				m_u32X;
-	int				m_u32Y;
-    int				m_u32W;
-	int				m_u32H;	
-}T_VpssCropInfo;
 
 
 
@@ -38,6 +15,7 @@ typedef int (*HI_VIDEO_CBK)(int, char *, int, unsigned long long);
 typedef int (*HI_VIDEO_CANCEL)(void *);	//给用户提供回调取消点
 
 void HI_AVIO_SignalHandle(int);
+int HI_AVIO_LoadConfig(const char *_pConfigPath);
 int HI_AVIO_Init(void);
 int HI_AVIO_Deinit(void);
 

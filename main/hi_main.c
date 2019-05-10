@@ -235,7 +235,9 @@ int main()
 	//IPC_ShareMemory(NULL, 12345, sizeof(shared_use_st), &play);	
 	
 	//IPC_ShareMemory(NULL, 88888, sizeof(shared_use_st), &video_smm);	
-
+	
+	HI_AVIO_LoadConfig(NULL);
+	
 	signal(SIGINT, HI_AVIO_SignalHandle);
 	signal(SIGTERM, HI_AVIO_SignalHandle);	
 	
