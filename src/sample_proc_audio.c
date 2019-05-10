@@ -436,7 +436,6 @@ HI_S32 SAMPLE_PROC_AUDIO_StartAi(AUDIO_DEV AiDevId, HI_S32 s32AiChnCnt,
 			}
 			
 			HI_MPI_AI_SetVqeVolume(AiDevId, i, _s32Volume);
-			printf("set ai volume = %d\n", _s32Volume);
 		}
     }
     

@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <getopt.h> 
 #include <fcntl.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -223,9 +224,79 @@ int video_data3(int type, char *p_data, int len, unsigned long long pts)
 }
 
 
+#define INI_PATH	("test.ini")
 
-int main()
+char *ini_path = NULL;
+
+static void usage(void)
 {
+	printf("help? NO NO NO\n");
+}
+
+
+char *os_strdup(const char *s)
+{
+	size_t len;
+	char *d;
+	len = strlen(s);
+	d = malloc(len + 1);
+	if (d == NULL)
+		return NULL;
+	memcpy(d, s, len);
+	d[len] = '\0';
+	return d;
+}
+
+int main(int argc, char *argv[])
+{
+	int c;
+	for (;;) 
+	{
+		c = getopt(argc, argv, "c:Bg:G:hi:p:P:s:v");
+		if (c < 0)
+			break;
+		switch (c) 
+		{
+			case 'c':
+				//配置文件
+				ini_path = os_strdup(optarg);
+				break;
+			case 'B':
+				printf("%c:%s\n", c, optarg);
+				break;
+			case 'g':
+				printf("%c:%s\n", c, optarg);
+				break;
+			case 'G':
+				printf("%c:%s\n", c, optarg);
+				break;
+			case 'h':
+				usage();
+				return 0;
+			case 'v':
+				printf("%c:%s\n", c, optarg);
+				break;
+			case 'i':
+				printf("%c:%s\n", c, optarg);
+				break;
+			case 'p':
+				printf("%c:%s\n", c, optarg);
+				break;
+			case 'P':
+				printf("%c:%s\n", c, optarg);
+				break;
+			case 's':
+				printf("%c:%s\n", c, optarg);
+				break;				
+			default:
+				usage();
+				return -1;
+		}
+	}	
+	
+	//return 0;
+	
+	
 	int ret = -1;
 	
 	g_rtsplive = create_rtsp_demo(554);
@@ -235,7 +306,9 @@ int main()
 	//IPC_ShareMemory(NULL, 12345, sizeof(shared_use_st), &play);	
 	
 	//IPC_ShareMemory(NULL, 88888, sizeof(shared_use_st), &video_smm);	
-
+	
+	HI_AVIO_LoadConfig(ini_path);
+	
 	signal(SIGINT, HI_AVIO_SignalHandle);
 	signal(SIGTERM, HI_AVIO_SignalHandle);	
 	
