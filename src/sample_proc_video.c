@@ -325,6 +325,9 @@ static int videoInputProcess(void *_pArg)
 				int i = 0;
 				for (i= 0; i<stStream.u32PackCount; i++)
 				{
+					
+					//server 遍历执行
+					
 #if 0					
 					//if (pstPara->pAiHandle)
 					{

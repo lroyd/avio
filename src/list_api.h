@@ -8,7 +8,7 @@ extern "C" {
 
 
 
-//int LIST_NodeAdd()
+int LIST_NodeAdd(void *_pListHead, void *_pListNode);
 
 
 #ifdef __cplusplus
