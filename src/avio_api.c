@@ -428,14 +428,43 @@ static int videoDeinit(void)
 	{
 		if (g_tVideoChnnlTable[i])
 		{
-			HI_AVIO_VideoSStopChannel(i+1);
+			HI_AVIO_VideoStopChannel(i+1);
 		}
 	}
 	
 	return 0;
 }
 
-int HI_AVIO_VideoSStartChannel(int _s32Chnnl, HI_VIDEO_CBK _pVideoCbk)
+
+int HI_AVIO_VideoRegisterServer(int _s32Chnnl, VIDEO_SERVER_TYPE _emType, HI_VIDEO_CBK _pHandle, HI_VIDEO_CANCEL _pCancel, void *_pArg)
+{
+	int s32Ret = -1;
+	if (g_tVideoConfigInfo.m_bEnable)
+	{
+		if (g_tVideoChnnlTable[_s32Chnnl - 1])
+		{		
+			if (_pHandle)
+			{
+				s32Ret = SAMPLE_PROC_VIDEO_RegisterServer(_s32Chnnl, _emType, _pHandle, _pCancel, _pArg);
+			}
+			else
+			{
+				printf("video channel [%d] server can not empty!!!\n", _s32Chnnl);
+			}
+		}
+		else
+		{
+			printf("video channel [%d] is not open!!!\n", _s32Chnnl);
+		}
+	}
+	else
+	{
+		printf("video is not supported!\n");
+	}	
+}
+
+
+int HI_AVIO_VideoStartChannel(int _s32Chnnl)
 {
 	int s32Ret = -1;
 	
@@ -443,12 +472,7 @@ int HI_AVIO_VideoSStartChannel(int _s32Chnnl, HI_VIDEO_CBK _pVideoCbk)
 	{
 		if (g_tVideoChnnlTable[_s32Chnnl - 1])
 		{	
-			if (g_tVideoConfigInfo.m_bSave == 0 && _pVideoCbk == NULL)
-			{
-				printf("video callback is empty!!!\n");
-				return s32Ret;
-			}
-			s32Ret = SAMPLE_PROC_VIDEO_CreatTrdAi(_s32Chnnl, _pVideoCbk, g_tVideoConfigInfo.m_bSave);
+			s32Ret = SAMPLE_PROC_VIDEO_CreatTrdAi(_s32Chnnl);
 		}
 		else
 		{
@@ -463,32 +487,8 @@ int HI_AVIO_VideoSStartChannel(int _s32Chnnl, HI_VIDEO_CBK _pVideoCbk)
 	return s32Ret;
 }
 
-int HI_AVIO_VideoSetTestCancel(int _s32Chnnl, HI_VIDEO_CANCEL _pCancel, void *_pArg)
-{
-	int s32Ret = -1;
-	if (g_tVideoConfigInfo.m_bEnable)
-	{
-		if (g_tVideoChnnlTable[_s32Chnnl - 1])
-		{		
-			if (_pCancel)		
-			{
-				s32Ret = SAMPLE_PROC_VIDEO_SetCancel(_s32Chnnl, _pCancel, _pArg);
-			}
-		}
-		else
-		{
-			printf("video channel [%d] is not open!!!\n", _s32Chnnl);
-		}		
-	}
-	else
-	{
-		printf("video is not supported!\n");
-	}
 
-	return s32Ret;
-}
-
-int HI_AVIO_VideoSStopChannel(int _s32Chnnl)
+int HI_AVIO_VideoStopChannel(int _s32Chnnl)
 {
 	int s32Ret = -1;
 	if (g_tVideoConfigInfo.m_bEnable)
@@ -509,6 +509,7 @@ int HI_AVIO_VideoSStopChannel(int _s32Chnnl)
 
 	return s32Ret;
 }
+
 
 ////////////////////////////////////////////////////
 //解析参数：音频+视频

@@ -247,6 +247,8 @@ char *os_strdup(const char *s)
 	return d;
 }
 
+static const char *pid_file = NULL;
+
 int main(int argc, char *argv[])
 {
 	int c;
@@ -280,7 +282,9 @@ int main(int argc, char *argv[])
 				printf("%c:%s\n", c, optarg);
 				break;
 			case 'p':
-				printf("%c:%s\n", c, optarg);
+				//pid file
+				//printf("%c:%s\n", c, optarg);
+				pid_file = optarg;
 				break;
 			case 'P':
 				printf("%c:%s\n", c, optarg);
@@ -314,14 +318,22 @@ int main(int argc, char *argv[])
 	
 	ret = HI_AVIO_Init();
 	printf("init %d\n", ret);
-	
 	ret = HI_AVIO_AudioSStart(audio_cap, audio_play);
+	
+	/////////////////////////////////////////////////////////////////////
+	
+	HI_AVIO_VideoRegisterServer(1, VIDEO_SER_USR, video_data3, NULL, NULL);		//rtsp测试
+	HI_AVIO_VideoRegisterServer(3, VIDEO_SER_USR, video_data2, user_cancel, (void *)&cancel);	//取消点测试
+	
+	HI_AVIO_VideoStartChannel(1);
+	HI_AVIO_VideoStartChannel(2);
+	HI_AVIO_VideoStartChannel(3);
 
 #if 0	
 	HI_AVIO_VideoSStartChannel(1, NULL);
 	HI_AVIO_VideoSStartChannel(2, NULL);
 	HI_AVIO_VideoSStartChannel(3, NULL);
-#endif	
+	
 
 	HI_AVIO_VideoSStartChannel(1, video_data3);
 	//HI_AVIO_VideoSStartChannel(3, video_data2);
@@ -329,7 +341,7 @@ int main(int argc, char *argv[])
 	//ret = HI_AVIO_VideoSStartChannel(3, video_data3);
 	//ret = HI_AVIO_VideoSStartChannel(1, video_data2);
 	//printf("audio start %d\n", ret);
-
+#endif
 	while(1)
 	{
 		sleep(1);
