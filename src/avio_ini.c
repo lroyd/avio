@@ -41,6 +41,7 @@ const char *audio_list[AUDIO_LIST_MAX] = {
 
 enum{
     VIDEO_ENABLE = 0,
+	VIDEO_SAVE,
 	VIDEO_SIZE,
 	VIDEO_CORP,
 	
@@ -53,6 +54,7 @@ enum{
 
 const char *video_list[VIDEO_LIST_MAX] = {
 	"video:enable",
+	"video:save_file",
 	"video:size",
 	"video:corp",
 	
@@ -64,7 +66,7 @@ const char *video_list[VIDEO_LIST_MAX] = {
 
 
 //(320,120):(640,480)格式
-static int parseCrop(char *_pString, int *_u32X, int *_u32Y, int *_u32W, int *_u32H)
+static int parseCrop(const char *_pString, int *_u32X, int *_u32Y, int *_u32W, int *_u32H)
 {
 	int ret = -1;
 	char *start = NULL, *end = NULL, str[8] = {0};
@@ -114,7 +116,7 @@ EXIT:
 }
 
 //(1, 4, 16, 96, 2, 1)
-static int parseChannel(char *_pString, T_VideoChnnlInfo **_pVideoChnnl)
+static int parseChannel(const char *_pString, T_VideoChnnlInfo **_pVideoChnnl)
 {
 	int ret = -1;
 	T_VideoChnnlInfo *pVideoChnnl = NULL;
@@ -227,9 +229,12 @@ int iniAvioParseConfig(const char *_pConfigPath, T_AudioConfigInfo *_pAudio, T_V
 	if (enbale)
 	{
 		_pVideo->m_bEnable = 1;
+		
+		_pVideo->m_bSave = iniparser_getint(conf, video_list[VIDEO_SAVE], 0);
+		
 		_pVideo->m_s32GroupSize = iniparser_getint(conf, video_list[VIDEO_SIZE], 7);	//必须有默认VGA
 		
-		char *str = NULL;
+		const char *str = NULL;
 		str = iniparser_getstring(conf, video_list[VIDEO_CORP], NULL);
 		if (str)
 		{
@@ -270,6 +275,8 @@ int iniAvioParseConfig(const char *_pConfigPath, T_AudioConfigInfo *_pAudio, T_V
 				*(_pVideoChnnlTable + i) = pVideoChnnl;
 			}
 		}
+		
+		
 		
 	}	
 	
