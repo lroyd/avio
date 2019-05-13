@@ -188,9 +188,19 @@ int parse_config(const char *path)
 		str = iniparser_getstring(conf, "rtsp:url", NULL);
 		if (str && channel > 0)
 		{
-			rtsp_video_chnnl = channel;
-			rtsp_url = os_strdup(str);
-			rtsp_enable = 1;
+			char *tmp = NULL;	//取出rtsp的流名
+			if(tmp = strchr(str + 7, '/') == NULL) //偏移过 "rtsp://"
+			{
+				//rtsp地址错误，
+				printf("rtsp url :[%s], format error\r\n", rtsp_url);
+			}
+			else
+			{
+				rtsp_video_chnnl = channel;
+				rtsp_url = os_strdup(tmp);
+				rtsp_enable = 1;				
+			}
+
 		}		
 	}
 
@@ -201,7 +211,7 @@ int parse_config(const char *path)
 		str = iniparser_getstring(conf, "rtmp:url", NULL);
 		if (str && channel > 0)
 		{
-			rtmp_video_chnnl = channel;
+			rtmp_video_chnnl = channel;	
 			rtmp_url = os_strdup(str);
 			rtmp_enable = 1;
 		}			
@@ -283,7 +293,7 @@ int main(int argc, char *argv[])
 	if (rtsp_enable)
 	{
 		g_rtsplive = create_rtsp_demo(554);
-		session = create_rtsp_session(g_rtsplive, "/live.sdp");		
+		session = create_rtsp_session(g_rtsplive, rtsp_url);
 		
 		HI_AVIO_VideoRegisterServer(rtsp_video_chnnl, "rtsp", rtsp_callbck, NULL, NULL);	
 	}	
