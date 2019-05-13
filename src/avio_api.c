@@ -294,13 +294,14 @@ static int videoInit(void)
     stViConfig.enNorm     = VIDEO_ENCODING_MODE_AUTO;
     stViConfig.enViChnSet = VI_CHN_SET_NORMAL;
     stViConfig.enWDRMode  = WDR_MODE_NONE;
+
     s32Ret = SAMPLE_COMM_VI_StartVi(&stViConfig);
     if (s32Ret)
     {
         printf("start vi failed!\n");
         goto EXIT_1;
     }	
-	
+
 	s32Ret = SAMPLE_COMM_SYS_GetPicSize(gs_enNorm, g_tVideoConfigInfo.m_s32GroupSize, &stSize);
 	if (HI_SUCCESS != s32Ret)
 	{
@@ -333,10 +334,13 @@ static int videoInit(void)
 
 	memset(&stVpssChnAttr, 0, sizeof(stVpssChnAttr));
 
-	for(i = 0; i < HI_VIDEO_CHNNL_NUM; i++)
+	//printf("=== table addr[0x%x.8], 1[0x%x.8] 2[0x%x.8] 3[0x%x.8]\n", g_tVideoChnnlTable, g_tVideoChnnlTable[0], g_tVideoChnnlTable[1], g_tVideoChnnlTable[2]);
+	
+	for(i = 0; i < s32ChnNum; i++)
 	{
 		if (g_tVideoChnnlTable[i])
 		{
+			
 			s32Ret = SAMPLE_COMM_SYS_GetPicSize(gs_enNorm, g_tVideoChnnlTable[i]->m_u8PixSize, &stSize);
 			if (s32Ret)
 			{
@@ -424,6 +428,7 @@ EXIT_1:
 static int videoDeinit(void)
 {
 	int i;
+	//printf("===--- table addr[0x%x.8], 1[0x%x.8] 2[0x%x.8] 3[0x%x.8]\n", g_tVideoChnnlTable, g_tVideoChnnlTable[0], g_tVideoChnnlTable[1], g_tVideoChnnlTable[2]);
 	for(i = 0; i < HI_VIDEO_CHNNL_NUM; i++)
 	{
 		if (g_tVideoChnnlTable[i])
@@ -436,16 +441,16 @@ static int videoDeinit(void)
 }
 
 
-int HI_AVIO_VideoRegisterServer(int _s32Chnnl, VIDEO_SERVER_TYPE _emType, HI_VIDEO_CBK _pHandle, HI_VIDEO_CANCEL _pCancel, void *_pArg)
+int HI_AVIO_VideoRegisterServer(int _s32Chnnl, char *_pName, HI_VIDEO_CBK _pHandle, HI_VIDEO_CANCEL _pCancel, void *_pArg)
 {
 	int s32Ret = -1;
-	if (g_tVideoConfigInfo.m_bEnable)
+	if (g_tVideoConfigInfo.m_bEnable && _s32Chnnl > 0)
 	{
 		if (g_tVideoChnnlTable[_s32Chnnl - 1])
 		{		
 			if (_pHandle)
 			{
-				s32Ret = SAMPLE_PROC_VIDEO_RegisterServer(_s32Chnnl, _emType, _pHandle, _pCancel, _pArg);
+				s32Ret = SAMPLE_PROC_VIDEO_RegisterServer(_s32Chnnl, _pName, _pHandle, _pCancel, _pArg);
 			}
 			else
 			{
@@ -468,7 +473,7 @@ int HI_AVIO_VideoStartChannel(int _s32Chnnl)
 {
 	int s32Ret = -1;
 	
-	if (g_tVideoConfigInfo.m_bEnable)
+	if (g_tVideoConfigInfo.m_bEnable && _s32Chnnl > 0)
 	{
 		if (g_tVideoChnnlTable[_s32Chnnl - 1])
 		{	
@@ -491,7 +496,7 @@ int HI_AVIO_VideoStartChannel(int _s32Chnnl)
 int HI_AVIO_VideoStopChannel(int _s32Chnnl)
 {
 	int s32Ret = -1;
-	if (g_tVideoConfigInfo.m_bEnable)
+	if (g_tVideoConfigInfo.m_bEnable && _s32Chnnl > 0)
 	{
 		if (g_tVideoChnnlTable[_s32Chnnl - 1])
 		{
@@ -622,13 +627,20 @@ int HI_AVIO_LoadConfig(const char *_pConfigPath)
 }
 
 ////////////////////////////////////////////////////
+static int videoSaveFile(int _u8NalType, char *_pData, int _u32Len, unsigned long long _u64Ptime)
+{
+	
+	
+	
+	return 0;
+}
+
 
 int HI_AVIO_Init(void)
 {
 	int s32Ret = -1, i, j, k = 0;
 	unsigned int u32BlkSize, u32BlkCnt = 4;
 	VB_CONF_S stVbConf;
-
 
 	memset(&stVbConf,0,sizeof(VB_CONF_S));
 
@@ -662,6 +674,7 @@ int HI_AVIO_Init(void)
 		stVbConf.u32MaxPoolCnt = 128;
 	}
 
+	SAMPLE_PROC_VIDEO_Init();
 
     s32Ret = SAMPLE_COMM_SYS_Init(&stVbConf);
     if (s32Ret)
@@ -679,7 +692,7 @@ int HI_AVIO_Init(void)
 			goto EXIT;
 		}		
 	}
-
+	
 	if (g_tVideoConfigInfo.m_bEnable)
 	{
 		s32Ret = videoInit();
@@ -690,6 +703,12 @@ int HI_AVIO_Init(void)
 		}		
 	}
 
+	if (g_tVideoConfigInfo.m_bSave)
+	{
+		for(i = 0; i < HI_VIDEO_CHNNL_NUM; i++)
+			HI_AVIO_VideoRegisterServer(i + 1, "save", videoSaveFile, NULL, NULL);
+	}
+	
 	return 0;
 	
 EXIT:
@@ -700,6 +719,7 @@ EXIT:
 
 int HI_AVIO_Deinit(void)
 {
+
 	if (g_tAudioConfigInfo.m_bEnable)
 	{
 		audioDeinit();
@@ -710,7 +730,6 @@ int HI_AVIO_Deinit(void)
 		videoDeinit();
 		SAMPLE_COMM_ISP_Stop();	
 	}
-
 	SAMPLE_COMM_SYS_Exit();	
 
 	return 0;

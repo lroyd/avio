@@ -131,7 +131,7 @@ static int parseChannel(const char *_pString, T_VideoChnnlInfo **_pVideoChnnl)
 	memset(str , 0, 8);
 	memcpy(str, start + 1, end - start - 1);
 	u8Chnnl = atoi(str);	
-	
+	//printf("xxxxxx %d, %s\n", u8Chnnl, str);
 	//u8BlkCnt
 	start = end + 1;	
 	end = strchr(start, ',');
@@ -262,6 +262,7 @@ int iniAvioParseConfig(const char *_pConfigPath, T_AudioConfigInfo *_pAudio, T_V
 			str = iniparser_getstring(conf, video_list[VIDEO_CHNNL_1 + i], NULL);
 			if (str)
 			{
+				//printf("=========== %d, %s\n", i , str);
 				T_VideoChnnlInfo *pVideoChnnl = NULL;
 				if (parseChannel(str, &pVideoChnnl))
 				{

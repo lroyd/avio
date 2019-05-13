@@ -19,122 +19,34 @@
 #include <sys/socket.h>
 
 #include "avio_api.h"
-
+#include "iniparser.h"
 #include "rtsp_demo.h"
 
+//rtsp
+static int rtsp_enable = 0;
+static int rtsp_video_chnnl = 0;	//1+
+static char *rtsp_url = NULL;
 rtsp_demo_handle g_rtsplive = NULL;
 rtsp_session_handle session= NULL;
 
-typedef enum  {
-  nal_unit_type_h264_nr = 0,
-  nal_unit_type_h264_p = 1,
-  nal_unit_type_h264_dataA = 2,
-  nal_unit_type_h264_dataB = 3,
-  nal_unit_type_h264_dataC = 4,
-  nal_unit_type_h264_idr = 5,
-  nal_unit_type_h264_sei = 6,
-  nal_unit_type_h264_sps = 7,
-  nal_unit_type_h264_pps = 8,
-  nal_unit_type_h264_delimiter = 9,
-  nal_unit_type_h264_nalend = 10,
-  nal_unit_type_h264_streamend = 11,
-  nal_unit_type_h264_pading = 12
-}nal_unit_type_h264;
-
-#define CONTEXT_SZ 100*1024//(360)
-typedef struct _tag  
-{  
-    int written;//作为一个标志，非0：表示可读，0表示可写  
-	nal_unit_type_h264 packet_type;
-	int packet_len;
-	unsigned char video_road;
-    unsigned char text[CONTEXT_SZ];//记录写入和读取的文本  
-}shared_use_st;
-
-//shared_use_st *cap = NULL;	//音频写入
-//shared_use_st *play = NULL;	//音频读出	
-shared_use_st *video_smm = NULL;
-
-int IPC_ShareMemory(char *_strPath, int _s32Key, int _u32Size, void **_pOutAddr)
-{
-	int s32Ret = -1;
-	key_t key;
-	int shmid;
-	if (_strPath)
-	{
-		if((key = ftok(_strPath, _s32Key)) < 0) 
-		{
-			printf("fail to ftok\n");
-			goto EXIT;
-		}
-	}
-	else
-	{
-		key = (key_t)_s32Key;
-	}
-	
-	if((shmid = shmget(key, _u32Size, 0666 | IPC_CREAT)) < 0) 
-	{
-		printf("fail to shmget\n");
-		goto EXIT;
-	}
-	
-	if((*_pOutAddr = (void *)shmat(shmid, NULL, 0)) == (void *)-1) 
-	{
-		printf("fail to shmat");
-		goto EXIT;
-	}
-	
-	s32Ret = 0;
-	
-EXIT:	
-	
-	return s32Ret;
-}
-
-
+//rtmp
+static int rtmp_enable = 0;
+static int rtmp_video_chnnl = 0;	//1+
+static char *rtmp_url = NULL;
 
 
 int audio_cap(char *p_data, int len)
 {
-	//HI_AVIO_AudioPlayImmt(p_data, len); //直接播放
-#if 0	
-	while(cap->written == 1) //0可写，不可读
-	{
-		usleep(100);
-	}
 
-	memset(cap->text, 0, len);  //海思采集必须是320
-	memcpy(cap->text, p_data, len);
-	cap->packet_len = len;			
-	cap->written = 1;	
-#endif	
 	return 0;
 }
 
 int audio_play(char *p_data, int len)
 {
-#if 0	
-	play->written = 0;
-	while(play->written == 0)
-	{
-		
-		usleep(100);
-	}
 
-	memcpy(p_data, play->text, play->packet_len); //320
-#endif	
 	return 0;
 }
 
-int video_data(int type, char *p_data, int len, unsigned long long pts)
-{
-
-	printf("1111 nal type %d, len %d\r\n", type, len);
-
-	
-	return 0;
-}
 
 static int cancel = 0;
 
@@ -165,7 +77,7 @@ int video_data2(int type, char *p_data, int len, unsigned long long pts)
 		//printf("cancel %d, addr %x\n", cancel, &cancel);
 	}
 	
-#else
+
 
 	while(video_smm->written == 1)
 	{
@@ -211,11 +123,11 @@ int video_data2(int type, char *p_data, int len, unsigned long long pts)
 
 
 
-int video_data3(int type, char *p_data, int len, unsigned long long pts)
+int rtsp_callbck(int type, char *p_data, int len, unsigned long long pts)
 {
-	//printf("3333 nal type %d, len %d\r\n", type, len);
+	//printf("rtsp nal type %d, len %d\r\n", type, len);
 	
-	if(g_rtsplive)
+	//if(g_rtsplive)
 	{
 		rtsp_sever_tx_video(g_rtsplive, session, p_data, len, pts);
 	}
@@ -249,9 +161,65 @@ char *os_strdup(const char *s)
 
 static const char *pid_file = NULL;
 
+
+
+
+int parse_config(const char *path)
+{
+	dictionary *conf;
+	//ini文件是否存在
+	if (access(path, F_OK))   
+    {
+        fprintf(stderr,"can not find [%s] !!!\n", path);
+        exit(EXIT_FAILURE);
+    }	
+	
+    conf = iniparser_load(path);//parser the file
+    if(conf == NULL)
+    {
+        fprintf(stderr,"can not open [%s] !!!\n", path);
+        exit(EXIT_FAILURE);
+    }
+
+	//rtsp
+	int channel = 0;
+	char *str = NULL;
+	//是否需要改成单个变量覆盖？
+	if (rtsp_url == NULL && rtsp_video_chnnl == 0)
+	{
+		//没有配置过
+		channel = iniparser_getint(conf, "rtsp:video_channel", 0);
+		str = iniparser_getstring(conf, "rtsp:url", NULL);
+		if (str && channel > 0)
+		{
+			rtsp_video_chnnl = channel;
+			rtsp_url = os_strdup(str);
+			rtsp_enable = 1;
+		}		
+	}
+
+	if (rtmp_url == NULL && rtmp_video_chnnl == 0)
+	{
+		//没有配置过
+		channel = iniparser_getint(conf, "rtmp:video_channel", 0);
+		str = iniparser_getstring(conf, "rtmp:url", NULL);
+		if (str && channel > 0)
+		{
+			rtmp_video_chnnl = channel;
+			rtmp_url = os_strdup(str);
+			rtmp_enable = 1;
+		}			
+	}
+
+	
+
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
-	int c;
+	int c, ret = -1;
+	
 	for (;;) 
 	{
 		c = getopt(argc, argv, "c:Bg:G:hi:p:P:s:v");
@@ -297,51 +265,45 @@ int main(int argc, char *argv[])
 				return -1;
 		}
 	}	
+	if (ini_path)
+	{
+		parse_config(ini_path);
+	}
 	
-	//return 0;
+
 	
-	
-	int ret = -1;
-	
-	g_rtsplive = create_rtsp_demo(554);
-	session= create_rtsp_session(g_rtsplive, "/live.sdp");	
-	
-	//IPC_ShareMemory(NULL, 12345, sizeof(shared_use_st), &cap);	
-	//IPC_ShareMemory(NULL, 12345, sizeof(shared_use_st), &play);	
-	
-	//IPC_ShareMemory(NULL, 88888, sizeof(shared_use_st), &video_smm);	
-	
-	HI_AVIO_LoadConfig(ini_path);
 	
 	signal(SIGINT, HI_AVIO_SignalHandle);
 	signal(SIGTERM, HI_AVIO_SignalHandle);	
 	
-	ret = HI_AVIO_Init();
+	HI_AVIO_LoadConfig(ini_path);	//解析[audio/video]
+	
+	ret = HI_AVIO_Init();	//整合LoadConfig？
 	printf("init %d\n", ret);
+
 	ret = HI_AVIO_AudioSStart(audio_cap, audio_play);
 	
 	/////////////////////////////////////////////////////////////////////
+	//初始化rtsp
+	if (rtsp_enable)
+	{
+		g_rtsplive = create_rtsp_demo(554);
+		session = create_rtsp_session(g_rtsplive, "/live.sdp");		
+		
+		HI_AVIO_VideoRegisterServer(rtsp_video_chnnl, "rtsp", rtsp_callbck, NULL, NULL);	
+	}	
 	
-	HI_AVIO_VideoRegisterServer(1, VIDEO_SER_USR, video_data3, NULL, NULL);		//rtsp测试
-	HI_AVIO_VideoRegisterServer(3, VIDEO_SER_USR, video_data2, user_cancel, (void *)&cancel);	//取消点测试
+
+	
+	
+	//HI_AVIO_VideoRegisterServer(1, "rtmp", rtsp_callbck, NULL, NULL);		//rtsp测试
+	//HI_AVIO_VideoRegisterServer(3, "usr2", video_data2, user_cancel, (void *)&cancel);	//取消点测试
 	
 	HI_AVIO_VideoStartChannel(1);
 	HI_AVIO_VideoStartChannel(2);
 	HI_AVIO_VideoStartChannel(3);
 
-#if 0	
-	HI_AVIO_VideoSStartChannel(1, NULL);
-	HI_AVIO_VideoSStartChannel(2, NULL);
-	HI_AVIO_VideoSStartChannel(3, NULL);
-	
 
-	HI_AVIO_VideoSStartChannel(1, video_data3);
-	//HI_AVIO_VideoSStartChannel(3, video_data2);
-	//HI_AVIO_VideoSetTestCancel(3, user_cancel, (void *)&cancel);
-	//ret = HI_AVIO_VideoSStartChannel(3, video_data3);
-	//ret = HI_AVIO_VideoSStartChannel(1, video_data2);
-	//printf("audio start %d\n", ret);
-#endif
 	while(1)
 	{
 		sleep(1);
