@@ -186,7 +186,7 @@ static void *videoInputProcess(void *_pArg)
 					{
 						//if (pstPara->pAiHandle)
 						{
-							pstPara->pAiHandle(stStream.pstPack[i].DataType.enH264EType,\
+							pstPara->pAiHandle(0, stStream.pstPack[i].DataType.enH264EType,\
 									stStream.pstPack[i].pu8Addr+stStream.pstPack[i].u32Offset,\
 									stStream.pstPack[i].u32Len-stStream.pstPack[i].u32Offset, \
 									stStream.pstPack[i].u64PTS);
@@ -299,14 +299,16 @@ static int videoInputProcess(void *_pArg)
 					break;
 				}
 
+				//尽量加速，不使用if操作
 				int i, j;
 				for (i= 0; i<stStream.u32PackCount; i++)
 				{
 					pNode = pList->next;
 					for (j = 0; j < s32Cnt; j++, pNode = pNode->next) 
 					{
-						pNode->m_pHandle(stStream.pstPack[i].DataType.enH264EType,\
-								stStream.pstPack[i].pu8Addr+stStream.pstPack[i].u32Offset,\
+						pNode->m_pHandle(s32Chnnl + 1, \
+								stStream.pstPack[i].DataType.enH264EType, \
+								stStream.pstPack[i].pu8Addr+stStream.pstPack[i].u32Offset, \
 								stStream.pstPack[i].u32Len-stStream.pstPack[i].u32Offset, \
 								stStream.pstPack[i].u64PTS);
 					}
@@ -563,7 +565,7 @@ int SAMPLE_PROC_VIDEO_DestoryTrdAi(int _s32Chnnl)
 #endif		
 		//测试节点是否存在
 		int total = NF_ListGetTotal(pList);
-		printf("channel[%d] exit node total = %d\n", _s32Chnnl, total);		
+		printf("video channel[%d] close, node total = %d\n", _s32Chnnl, total);		
     }
 
     return 0;

@@ -48,7 +48,13 @@ SAMPLE_RC_E enRcMode= SAMPLE_RC_VBR;
 ////////////////////////////////////////////////////
 T_VideoConfigInfo g_tVideoConfigInfo = {0};
 
-
+///////////////////////////////////////////////////
+static FILE *pSaveFile[HI_VIDEO_CHNNL_NUM] = {NULL};
+static const char *pSaveFileName[HI_VIDEO_CHNNL_NUM] = {
+	"stream_chnn1.h264",
+	"stream_chnn2.h264",
+	"stream_chnn3.h264"
+};
 
 
 static int audioInit(void)
@@ -613,11 +619,12 @@ static int defaultParseConfig(void)
 
 
 ////////////////////////////////////////////////////
-static int videoSaveFile(int _u8NalType, char *_pData, int _u32Len, unsigned long long _u64Ptime)
+static int videoSaveFile(int __s32Chnnl, int _u8NalType, char *_pData, int _u32Len, unsigned long long _u64Ptime)
 {
+	//printf("chn %d, nal type %d, len %d\r\n", __s32Chnnl, _u8NalType, _u32Len);
 	
-	
-	
+	fwrite(_pData, _u32Len, 1, pSaveFile[__s32Chnnl - 1]);
+	fflush(pSaveFile[__s32Chnnl - 1]);		
 	return 0;
 }
 
@@ -702,8 +709,14 @@ int HI_AVIO_Init(const char *_pConfigPath)
 
 	if (g_tVideoConfigInfo.m_bSave)
 	{
+		printf("user save file mode ON:\n");
 		for(i = 0; i < HI_VIDEO_CHNNL_NUM; i++)
+		{
+			pSaveFile[i] = fopen(pSaveFileName[i], "wb");
+			printf("opens file = %s\n", pSaveFileName[i]);
 			HI_AVIO_VideoRegisterServer(i + 1, "save", videoSaveFile, NULL, NULL);
+		}
+			
 	}
 	
 	return 0;
@@ -716,7 +729,6 @@ EXIT:
 
 int HI_AVIO_Deinit(void)
 {
-
 	if (g_tAudioConfigInfo.m_bEnable)
 	{
 		audioDeinit();
@@ -725,6 +737,17 @@ int HI_AVIO_Deinit(void)
 	if (g_tVideoConfigInfo.m_bEnable)
 	{
 		videoDeinit();
+		
+		if (g_tVideoConfigInfo.m_bSave)
+		{
+			int i;
+			for(i = 0; i < HI_VIDEO_CHNNL_NUM; i++)
+			{
+				fclose(pSaveFile[i]);
+				printf("user close all save file\n");
+			}
+				
+		}		
 		SAMPLE_COMM_ISP_Stop();	
 	}
 	SAMPLE_COMM_SYS_Exit();	

@@ -61,7 +61,7 @@ int user_cancel(void *p_arg)
 	return 0;
 }
 
-int video_data2(int type, char *p_data, int len, unsigned long long pts)
+int video_data2(int chnnl, int type, char *p_data, int len, unsigned long long pts)
 {
 	
 	//printf("2222 nal type %d, len %d\r\n", type, len);
@@ -123,7 +123,7 @@ int video_data2(int type, char *p_data, int len, unsigned long long pts)
 
 
 
-int rtsp_callbck(int type, char *p_data, int len, unsigned long long pts)
+int rtsp_callbck(int chnnl, int type, char *p_data, int len, unsigned long long pts)
 {
 	//printf("rtsp nal type %d, len %d\r\n", type, len);
 	rtsp_sever_tx_video(g_rtsplive, session, p_data, len, pts);
