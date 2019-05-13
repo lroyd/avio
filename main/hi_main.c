@@ -126,11 +126,7 @@ int video_data2(int type, char *p_data, int len, unsigned long long pts)
 int rtsp_callbck(int type, char *p_data, int len, unsigned long long pts)
 {
 	//printf("rtsp nal type %d, len %d\r\n", type, len);
-	
-	//if(g_rtsplive)
-	{
-		rtsp_sever_tx_video(g_rtsplive, session, p_data, len, pts);
-	}
+	rtsp_sever_tx_video(g_rtsplive, session, p_data, len, pts);
 	
 	return 0;
 }
@@ -276,9 +272,8 @@ int main(int argc, char *argv[])
 	signal(SIGINT, HI_AVIO_SignalHandle);
 	signal(SIGTERM, HI_AVIO_SignalHandle);	
 	
-	HI_AVIO_LoadConfig(ini_path);	//解析[audio/video]
 	
-	ret = HI_AVIO_Init();	//整合LoadConfig？
+	ret = HI_AVIO_Init(ini_path);	
 	printf("init %d\n", ret);
 
 	ret = HI_AVIO_AudioSStart(audio_cap, audio_play);

@@ -612,20 +612,6 @@ static int defaultParseConfig(void)
 
 
 
-int HI_AVIO_LoadConfig(const char *_pConfigPath)
-{
-	if (_pConfigPath)
-	{
-		iniAvioParseConfig(_pConfigPath, &g_tAudioConfigInfo, &g_tVideoConfigInfo, g_tVideoChnnlTable);
-	}
-	else
-	{
-		defaultParseConfig();
-	}
-	
-	return 0;
-}
-
 ////////////////////////////////////////////////////
 static int videoSaveFile(int _u8NalType, char *_pData, int _u32Len, unsigned long long _u64Ptime)
 {
@@ -636,12 +622,23 @@ static int videoSaveFile(int _u8NalType, char *_pData, int _u32Len, unsigned lon
 }
 
 
-int HI_AVIO_Init(void)
+int HI_AVIO_Init(const char *_pConfigPath)
 {
 	int s32Ret = -1, i, j, k = 0;
 	unsigned int u32BlkSize, u32BlkCnt = 4;
 	VB_CONF_S stVbConf;
 
+	//先加载配置文件
+	if (_pConfigPath)
+	{
+		iniAvioParseConfig(_pConfigPath, &g_tAudioConfigInfo, &g_tVideoConfigInfo, g_tVideoChnnlTable);
+	}
+	else
+	{
+		defaultParseConfig();
+	}	
+	
+	
 	memset(&stVbConf,0,sizeof(VB_CONF_S));
 
 	if (g_tVideoConfigInfo.m_bEnable)

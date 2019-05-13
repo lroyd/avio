@@ -14,10 +14,9 @@ typedef int (*HI_AUDIO_CBK)(char *, int);
 typedef int (*HI_VIDEO_CBK)(int, char *, int, unsigned long long);
 typedef int (*HI_VIDEO_CANCEL)(void *);	//给用户提供回调取消点
 
-int HI_AVIO_LoadConfig(const char *_pConfigPath);
-
 void HI_AVIO_SignalHandle(int);
-int HI_AVIO_Init(void);
+
+int HI_AVIO_Init(const char *_pConfigPath);
 int HI_AVIO_Deinit(void);
 
 
@@ -28,7 +27,6 @@ int HI_AVIO_Deinit(void);
 //取消点只有阻塞需要设置
 int HI_AVIO_VideoRegisterServer(int _s32Chnnl, char *_pctName, HI_VIDEO_CBK _pHandle, HI_VIDEO_CANCEL _pCancel, void *_pArg);
 
-//int HI_AVIO_VideoSaveFile(void); //专门为VIDEO_SER_SAVE准备，用户也可以的自定义
 
 int HI_AVIO_VideoStartChannel(int _s32Chnnl);	//通道数1+
 int HI_AVIO_VideoStopChannel(int _s32Chnnl);
