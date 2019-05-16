@@ -2,7 +2,7 @@ PROJECT(avio)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-INCLUDE(${CMAKE_HOME_DIRECTORY}/config/toolchain-cross-hi3518e.cmake)
+#INCLUDE(${CMAKE_HOME_DIRECTORY}/config/toolchain-cross-hi3518e.cmake)
 
 
 SET(CMAKE_C_FLAGS "-g -lm -fPIC -pthread ${CHIP_FLAGS}")
@@ -15,8 +15,8 @@ SET (RTSP_DIRS ${CMAKE_HOME_DIRECTORY}/rtsp_lib)
 SET (INI_DIRS  ${CMAKE_HOME_DIRECTORY}/iniparse)
 SET (OS_DIRS  ${CMAKE_HOME_DIRECTORY}/os)
 
-FILE(GLOB_RECURSE INI_SRC_LIST "${INI_DIRS}/*c")
-FILE(GLOB_RECURSE OS_SRC_LIST "${OS_DIRS}/*c")
+FILE(GLOB_RECURSE INI_SRC_LIST "${INI_DIRS}/*.c")
+FILE(GLOB_RECURSE OS_SRC_LIST "${OS_DIRS}/*.c")
 
 SET (INCLUDE_DIRS "")
 
@@ -41,7 +41,11 @@ SET_TARGET_PROPERTIES(hi3518e_avio
 ADD_EXECUTABLE(avio "main/hi_main.c")
 TARGET_LINK_LIBRARIES(avio hi3518e_avio ${RTSP_DIRS}/librtsp.a)
 
+###################################################################
+SET (NEXUS_DIRS  ${CMAKE_HOME_DIRECTORY}/nexus)
+FILE(GLOB_RECURSE NEXUS_SRC_LIST "${NEXUS_DIRS}/*.c")
 
+ADD_EXECUTABLE(nexus ${NEXUS_SRC_LIST})
 
 
 
